@@ -1,6 +1,7 @@
 # LeisureLink
 
 ## Get Started
+
 use `git clone https://github.com/dwu101/LeisureLink.git` to clone this repo 
 
 download node from https://nodejs.org/en if you haven't already 
@@ -18,3 +19,14 @@ In one terminal, cd into the backend folder and execute `python app.py`. This wi
 In the other terminal, cd into the frontend folder and execute `npm start`. This will open a page on http://localhost:3000/. 
 
 If its active, changes to the code will be made automatically in the frontend and backend (i dont think u need to reload usually, but u may sometimes)
+
+## Pushing
+
+Ensure you are pushing from the root directory (the one with backend and frontend), otherwise only a fraction of the app will be pushed
+
+Before you push, you MUST pull the repo from the github to ensure the rest of the codebase is up-to-date so you don't accidentally delete other people's pushes. I think the command for this is `git pull origin main` 
+
+Resolve any conflicts that github tells you there are. If the conflicts involve features other people added, please notify the discord and @everyone.
+
+@everyone when you finally push so we know.
+
