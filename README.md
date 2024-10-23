@@ -25,10 +25,14 @@ If its active, changes to the code will be made automatically in the frontend an
 Ensure you are pushing from the root directory (the one with backend and frontend), otherwise only a fraction of the app will be pushed
 
 Before you push, you MUST pull the repo from the github to ensure the rest of the codebase is up-to-date so you don't accidentally delete other people's pushes:
+
 `git add *`
+
 `git commit -m "insert a message here"`
+
 `git pull origin main` 
-If there is a merge conflict, there will be a notification on the file(s) that have the conflict(s). Open the Editor that they have for you and select the version you wish to keep.
+
+If there is a merge conflict, there will be a notification on the file(s) that have the conflict(s). Open the Merge Editor that they have for you and select the version you wish to keep.
 
 Resolve any conflicts that github tells you there are. If the conflicts involve features other people added, please notify the discord and @everyone.
 
