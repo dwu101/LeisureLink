@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import './LoginSignupPage.css';  // Import the CSS file
-import { Link } from 'react-router-dom';  // Import Link
+import './LoginSignupPage.css';  
+import { Link } from 'react-router-dom';  
+import HelloWorld from '../componenets/HelloWorld';
 
 
 function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  // const namesArray = ["Alice", "Bob", "Charlie", "Diana"];
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -39,10 +41,14 @@ function LoginPage() {
           />
         </div>
         <button type="submit" className="button">Log In</button>
+
         <Link to="/SignupPage">
           <button className="button" style={{ marginLeft: '20px' }}>Or Sign up today!</button>
         </Link>
+
       </form>
+
+      {/* <HelloWorld  names={namesArray} /> */}
     </div>
   );
 }
