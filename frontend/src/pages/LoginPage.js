@@ -40,11 +40,12 @@ function LoginPage() {
             className="input"
           />
         </div>
-        <button type="submit" className="button">Log In</button>
+        
 
         <Link to="/SignupPage">
-          <button className="button" style={{ marginLeft: '20px' }}>Or Sign up today!</button>
+          <button className="button" >Or Sign up today!</button>
         </Link>
+        <button type="submit" className="button" style={{marginLeft:'10px'}}>Log In</button>
 
       </form>
 
