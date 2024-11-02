@@ -14,6 +14,18 @@ function SignupPage() {
     console.log(username);
     console.log(password);
     //INSERT API CALL HERE
+    try {
+      const response = await axios.post('http://localhost:5000/api/signup', {
+        email,
+        username,
+        password,
+      });
+
+      // Display success message or redirect as needed
+      setMessage(response.data.message);
+    } catch (error) {
+      setMessage(error.response?.data?.error || "Signup failed. Please try again.");
+    }
   };
 
   return (

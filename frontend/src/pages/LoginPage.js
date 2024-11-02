@@ -12,6 +12,19 @@ function LoginPage() {
   const handleSubmit = (event) => {
     event.preventDefault();
     //INSERT API CALL HERE
+    try {
+      const response = await axios.post('http://localhost:5000/api/login', {
+        email,
+        password,
+      });
+
+      // Handle successful login
+      setMessage(response.data.message); // Or redirect, etc.
+    } catch (error) {
+      // Handle errors (e.g., incorrect credentials)
+      setMessage(error.response?.data?.error || "Login failed. Please try again.");
+    }
+    return (
   };
 
   return (
