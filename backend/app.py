@@ -5,19 +5,46 @@ import secrets
 import requests
 from google_auth_oauthlib.flow import Flow
 from flask import redirect, session
+from flask_sqlalchemy import SQLAlchemy 
 import os
+import psycopg2 
+from sqlalchemy import create_engine
+from sqlalchemy_utils import database_exists, create_database
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
 cookies = {}
 
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@localhost/database'
+
+db = SQLAlchemy(app)
+
+class Account(db.Model):
+    __tablename__='accounts'
+    account_id=db.Column(db.Integer, primary_key=True)
+    username=db.Column(db.String(40), unique=True)
+    password=db.Column(db.String(40))
+
+    def __init__(self,username,password):
+        self.username=username
+        self.password=password
+
+def init_db():
+    # Check if the database exists, and create it if not
+    engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+    if not database_exists(engine.url):
+        create_database(engine.url)
+        print("Database created.")
+    else:
+        print("Database already exists.")
+    db.create_all()  # Create tables based on the models defined
 
 @app.before_request
 def make_session_permanent():
     session.permanent = True
 
 @app.route('/')
-def home():
+def home(p):
     return "Backend is now running!!!!!!!!!!!!!!!"
 
 
@@ -280,6 +307,10 @@ def logout():
 
 #     except Exception as e:
 #         return f"Error: {e}", 404
+
+# Initialize the database on app startup
+with app.app_context():
+    init_db()
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5000,debug=True)

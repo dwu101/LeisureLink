@@ -23,9 +23,9 @@ function SignupPage() {
       });
 
       // Display success message or redirect as needed
-      setMessage(response.data.message);
+      console.log(response.data.message);
     } catch (error) {
-      setMessage(error.response?.data?.error || "Signup failed. Please try again.");
+      console.log(error.response?.data?.error || "Signup failed. Please try again.");
     }
   };
 

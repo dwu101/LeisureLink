@@ -20,10 +20,10 @@ function LoginPage() {
       });
 
       // Handle successful login
-      setMessage(response.data.message); // Or redirect, etc.
+      console.log(response.data.message); // Or redirect, etc.
     } catch (error) {
       // Handle errors (e.g., incorrect credentials)
-      setMessage(error.response?.data?.error || "Login failed. Please try again.");
+      console.log(error.response?.data?.error || "Login failed. Please try again.");
     }
     return
   };
