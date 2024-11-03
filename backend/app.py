@@ -70,7 +70,7 @@ class Groups(db.Model):
     __tablename__='Groups'
     group_id=db.Column(db.Integer,primary_key=True)
     group_name=db.Column(db.String(40), nullable=False)
-    users=db.Column(db.ARRAY(db.Integer), ForeignKey(User.account_id))
+    users=db.Column(db.ARRAY(db.Integer, ForeignKey(User.account_id)))
 
     def __init__(self, group_id, group_name, users):
         self.group_id=group_id
