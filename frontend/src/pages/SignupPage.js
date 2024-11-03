@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './LoginSignupPage.css';  // Import the CSS file
 import { Link } from 'react-router-dom';  // Import Link
+import axios from 'axios';
 
 
 function SignupPage() {
@@ -8,7 +9,7 @@ function SignupPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     console.log(email);
     console.log(username);

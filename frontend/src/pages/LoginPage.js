@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './LoginSignupPage.css';  
 import { Link } from 'react-router-dom';  
 import HelloWorld from '../componenets/HelloWorld';
+import axios from 'axios';
 
 
 function LoginPage() {
@@ -9,7 +10,7 @@ function LoginPage() {
   const [password, setPassword] = useState('');
   // const namesArray = ["Alice", "Bob", "Charlie", "Diana"];
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     //INSERT API CALL HERE
     try {
@@ -24,7 +25,7 @@ function LoginPage() {
       // Handle errors (e.g., incorrect credentials)
       setMessage(error.response?.data?.error || "Login failed. Please try again.");
     }
-    return (
+    return
   };
 
   return (
