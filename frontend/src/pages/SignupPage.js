@@ -3,11 +3,12 @@ import './LoginSignupPage.css';  // Import the CSS file
 import { Link } from 'react-router-dom';  // Import Link
 import axios from 'axios';
 
-
 function SignupPage() {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [message, setMessage] = useState(''); // Add this line to define setMessage
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,11 +24,15 @@ function SignupPage() {
       });
 
       // Display success message or redirect as needed
-      console.log(response.data.message);
-    } catch (error) {
-      console.log(error.response?.data?.error || "Signup failed. Please try again.");
-    }
+        setMessage(response.data.message);
+      } catch (error) {
+        setMessage(error.response?.data?.error || "Signup failed. Please try again.");
+      }
+
   };
+
+  
+
 
   return (
     <div className="container">
@@ -70,6 +75,7 @@ function SignupPage() {
           <button className="button" style={{ marginLeft: '20px' }}>Login instead</button>
         </Link>
       </form>
+      {message && <p>{message}</p>}
     </div>
   );
 }

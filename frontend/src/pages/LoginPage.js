@@ -4,11 +4,11 @@ import { Link } from 'react-router-dom';
 import HelloWorld from '../componenets/HelloWorld';
 import axios from 'axios';
 
-
 function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  // const namesArray = ["Alice", "Bob", "Charlie", "Diana"];
+  const [message, setMessage] = useState(''); // Add this line to define setMessage
+
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -20,12 +20,12 @@ function LoginPage() {
       });
 
       // Handle successful login
-      console.log(response.data.message); // Or redirect, etc.
+      setMessage(response.data.message); // Or redirect, etc.
     } catch (error) {
       // Handle errors (e.g., incorrect credentials)
-      console.log(error.response?.data?.error || "Login failed. Please try again.");
+      setMessage(error.response?.data?.error || "Login failed. Please try again.");
     }
-    return
+
   };
 
   return (
@@ -64,6 +64,7 @@ function LoginPage() {
       </form>
 
       {/* <HelloWorld  names={namesArray} /> */}
+      {message && <p>{message}</p>}
     </div>
   );
 }
