@@ -1,20 +1,38 @@
 import React, { useState } from 'react';
 import './LoginSignupPage.css';  // Import the CSS file
 import { Link } from 'react-router-dom';  // Import Link
-
+import axios from 'axios';
 
 function SignupPage() {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [message, setMessage] = useState(''); // Add this line to define setMessage
 
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     console.log(email);
     console.log(username);
     console.log(password);
     //INSERT API CALL HERE
+    try {
+      const response = await axios.post('http://localhost:5000/api/signup', {
+        email,
+        username,
+        password,
+      });
+
+      // Display success message or redirect as needed
+        setMessage(response.data.message);
+      } catch (error) {
+        setMessage(error.response?.data?.error || "Signup failed. Please try again.");
+      }
+
   };
+
+  
+
 
   return (
     <div className="container">
@@ -57,6 +75,7 @@ function SignupPage() {
           <button className="button" style={{ marginLeft: '20px' }}>Login instead</button>
         </Link>
       </form>
+      {message && <p>{message}</p>}
     </div>
   );
 }

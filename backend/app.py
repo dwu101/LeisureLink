@@ -5,19 +5,95 @@ import secrets
 import requests
 from google_auth_oauthlib.flow import Flow
 from flask import redirect, session
+from flask_sqlalchemy import SQLAlchemy 
 import os
+import psycopg2 
+from sqlalchemy import create_engine, ForeignKey
+from sqlalchemy_utils import database_exists, create_database, relationships, generic_relationship
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
 cookies = {}
 
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@localhost/database'
+
+db = SQLAlchemy(app)
+
+class User(db.Model):
+    __tablename__='User'
+    account_id=db.Column(db.Integer, primary_key=True)
+    username=db.Column(db.String(40), unique=True, nullable=False)
+    password=db.Column(db.String(40), nullable=False)
+    email=db.Column(db.String(40), nullable=False)
+    bio=db.Column(db.String(1000))
+    display_name=db.Column(db.String(40))
+    status=db.Column(db.String(40))
+    groups=db.Column(db.ARRAY(db.Integer))
+    pfp_link=db.Column(db.String(100))
+
+    def __init__(self,username,password,email,bio,display_name,status,groups,pfp_link):
+        self.username=username
+        self.password=password
+        self.email=email
+        self.bio=bio
+        self.display_name=display_name
+        self.status=status
+        self.groups=groups
+        self.pfp_link=pfp_link
+
+class UserGCAL(db.Model):
+    __tablename__='UserGCal'
+    account_id=db.Column(db.Integer, ForeignKey(User.account_id),primary_key=True)
+    username=db.Column(db.String(40), unique=True, nullable=False)
+    client_id=db.Column(db.String(40), nullable=False)
+    project_id=db.Column(db.String(40), nullable=False)
+    auth_uri=db.Column(db.String(500), nullable=False)
+    token_uri=db.Column(db.String(500), nullable=False)
+    auth_provider_x509_cert_url=db.Column(db.String(500), nullable=False)
+    client_secret=db.Column(db.String(500), nullable=False)
+    redirect_uri=db.Column(db.String(500), nullable=False)
+
+    
+
+    def __init__(self, username, client_id, project_id, auth_uri, token_uri, auth_provider_x509_cert_url, client_secret, redirect_uri):
+        self.username=username
+        self.client_id=client_id
+        self.project_id=project_id
+        self.auth_uri=auth_uri
+        self.token_uri=token_uri
+        self.auth_provider_x509_cert_url=auth_provider_x509_cert_url
+        self.client_secret=client_secret
+        self.redirect_uri=redirect_uri
+
+
+class Groups(db.Model):
+    __tablename__='Groups'
+    group_id=db.Column(db.Integer,primary_key=True)
+    group_name=db.Column(db.String(40), nullable=False)
+    users=db.Column(db.ARRAY(db.Integer, ForeignKey(User.account_id)))
+
+    def __init__(self, group_id, group_name, users):
+        self.group_id=group_id
+        self.group_name=group_name
+        self.users=users
+
+
+def init_db():
+    # Check if the database exists, and create it if not
+    engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+    if not database_exists(engine.url):
+        create_database(engine.url)
+        print("Database created.")
+    else:
+        print("Database already exists.")
+    db.create_all()  # Create tables based on the models defined
 
 @app.before_request
 def make_session_permanent():
     session.permanent = True
 
 @app.route('/')
-def home():
+def home(p):
     return "Backend is now running!!!!!!!!!!!!!!!"
 
 
@@ -291,7 +367,9 @@ def logout():
 #     except Exception as e:
 #         return f"Error: {e}", 404
 
-
+# Initialize the database on app startup
+with app.app_context():
+    init_db()
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5000,debug=True)

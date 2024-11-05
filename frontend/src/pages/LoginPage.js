@@ -2,16 +2,30 @@ import React, { useState } from 'react';
 import './LoginSignupPage.css';  
 import { Link } from 'react-router-dom';  
 import HelloWorld from '../componenets/HelloWorld';
-
+import axios from 'axios';
 
 function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  // const namesArray = ["Alice", "Bob", "Charlie", "Diana"];
+  const [message, setMessage] = useState(''); // Add this line to define setMessage
 
-  const handleSubmit = (event) => {
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
     //INSERT API CALL HERE
+    try {
+      const response = await axios.post('http://localhost:5000/api/login', {
+        email,
+        password,
+      });
+
+      // Handle successful login
+      setMessage(response.data.message); // Or redirect, etc.
+    } catch (error) {
+      // Handle errors (e.g., incorrect credentials)
+      setMessage(error.response?.data?.error || "Login failed. Please try again.");
+    }
+
   };
 
   return (
@@ -40,15 +54,17 @@ function LoginPage() {
             className="input"
           />
         </div>
-        <button type="submit" className="button">Log In</button>
+        
 
         <Link to="/SignupPage">
-          <button className="button" style={{ marginLeft: '20px' }}>Or Sign up today!</button>
+          <button className="button" >Or Sign up today!</button>
         </Link>
+        <button type="submit" className="button" style={{marginLeft:'10px'}}>Log In</button>
 
       </form>
 
       {/* <HelloWorld  names={namesArray} /> */}
+      {message && <p>{message}</p>}
     </div>
   );
 }
