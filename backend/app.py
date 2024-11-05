@@ -109,6 +109,16 @@ SCOPES = [
     'https://www.googleapis.com/auth/userinfo.profile',
     'openid'
 ]
+#Basic endpoint for the profile page, assuming that all of the information for the profile page will be in a database
+@app.route('/api/projects', methods=['GET'])
+def get_projects():
+    return jsonify({
+        'success': True,
+        #'data': sample_data
+    })
+
+
+
 @app.route('/authorize')
 def authorize():
     state = secrets.token_urlsafe(32)

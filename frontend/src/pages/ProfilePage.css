@@ -126,3 +126,53 @@
 	  margin-bottom: 2rem;
 	}
   }
+
+  body {
+	margin: 0;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+	  'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+	  sans-serif;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+  }
+  
+  code {
+	font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+	  monospace;
+  }
+  .circle-button {
+	width: 64px;
+	height: 64px;
+	border-radius: 50%;
+	background-color: #dc2626; /* Red color */
+	border: none;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin: 0 auto 24px auto;
+	transition: all 0.2s ease;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+	position: relative;
+  }
+  
+  .circle-button:hover {
+	background-color: #b91c1c; /* Darker red on hover */
+	transform: translateY(-2px);
+	box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .circle-button:active {
+	transform: translateY(0);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .circle-button.clicked {
+	transform: scale(0.95);
+  }
+  
+  .button-text {
+	color: white;
+	font-size: 14px;
+	font-weight: 500;
+  }
