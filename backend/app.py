@@ -10,12 +10,26 @@ import os
 import psycopg2 
 from sqlalchemy import create_engine, ForeignKey
 from sqlalchemy_utils import database_exists, create_database, relationships, generic_relationship
+from werkzeug.utils import secure_filename
+from pathlib import Path
+
+
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
 cookies = {}
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@localhost/database'
+
+FRONTEND_DIR = Path(__file__).parent.parent / 'frontend'
+UPLOAD_FOLDER = FRONTEND_DIR / 'public' / 'profile-pictures'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 db = SQLAlchemy(app)
 
@@ -298,6 +312,39 @@ def logout():
             'error': 'Logout failed',
             'message': str(e)
         }), 500
+  
+@app.route('/api/upload-profile-picture', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 401
+    
+    if file and allowed_file(file.filename):
+        # Secure the filename
+        filename = secure_filename(file.filename)
+        
+        # Add timestamp to ensure uniqueness
+        import time
+        timestamp = str(int(time.time()))
+        filename = f"{timestamp}_{filename}"
+        
+        # Create upload folder if it doesn't exist
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        
+        # Save the file
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+        
+        return jsonify({
+            'success': True,
+            'imagePath': f'/profile-pictures/{filename}'
+        })
+    
+    return jsonify({'error': 'File type not allowed'}), 404
 
 # @app.route('/search', methods=['POST', 'OPTIONS'])
 # def search():
