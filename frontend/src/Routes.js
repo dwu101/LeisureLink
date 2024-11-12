@@ -6,6 +6,8 @@ import GoogleAuth from './pages/GoogleAuth';
 import AddEvent from './pages/AddEvent';
 import SearchPage from './pages/SearchPage';
 import ProfilePage from './pages/ProfilePage';
+import UserProfile from './pages/EditProfile';
+import ProfilePictureUpload from './pages/ProfilePictureUpload';
 
 // Export all routes as an array of Route components
 const routes = [
@@ -15,6 +17,8 @@ const routes = [
   <Route path="/AddEvent" element={<AddEvent />} key="AddEvent" />,
   <Route path="/SearchPage" element={<SearchPage />} key="SearchPage" />,
   <Route path="/ProfilePage" element={<ProfilePage />} key="ProfilePage" />,
+  <Route path="/UserProfile" element={<UserProfile />} key="UserProfile" />,
+  <Route path="/ProfilePictureUpload" element={<ProfilePictureUpload />} key="ProfilePictureUpload" />,
 ];
 
 export default routes;

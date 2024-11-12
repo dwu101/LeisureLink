@@ -10,12 +10,26 @@ import os
 import psycopg2 
 from sqlalchemy import create_engine, ForeignKey
 from sqlalchemy_utils import database_exists, create_database, relationships, generic_relationship
+from werkzeug.utils import secure_filename
+from pathlib import Path
+
+
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
 cookies = {}
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@localhost/database'
+
+FRONTEND_DIR = Path(__file__).parent.parent / 'frontend'
+UPLOAD_FOLDER = FRONTEND_DIR / 'public' / 'profile-pictures'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 db = SQLAlchemy(app)
 
@@ -55,7 +69,8 @@ class UserGCAL(db.Model):
 
     
 
-    def __init__(self, username, client_id, project_id, auth_uri, token_uri, auth_provider_x509_cert_url, client_secret, redirect_uri):
+    def __init__(self, account_id, username, client_id, project_id, auth_uri, token_uri, auth_provider_x509_cert_url, client_secret, redirect_uri):
+        self.account_id=account_id
         self.username=username
         self.client_id=client_id
         self.project_id=project_id
@@ -77,12 +92,56 @@ class Groups(db.Model):
         self.group_name=group_name
         self.users=users
 
+# Helper Functions
+def get_user_by_username(username):
+    return User.query.filter_by(username=username).first()
+
+def check_user_credentials(username, password):
+    user = get_user_by_username(username)
+    if user and user.password == password:
+        return True
+    return False
+
+def create_user(username, password, email):
+    try:
+        new_user = User(username=username, password=password, email=email, bio="", display_name="", status="", groups=[], pfp_link="")
+        db.session.add(new_user)
+        db.session.commit()
+        return {"success": True, "message": "User created successfully."}
+    except IntegrityError:
+        db.session.rollback()
+        return {"success": False, "message": "Username or email already exists."}
+
+def get_email(username):
+    user = get_user_by_username(username)
+    return user.email if user else None
+
+def get_bio(username):
+    user = get_user_by_username(username)
+    return user.bio if user else None
+
+def get_display_name(username):
+    user = get_user_by_username(username)
+    return user.display_name if user else None
+
+def get_status(username):
+    user = get_user_by_username(username)
+    return user.status if user else None
+
+def get_groups(username):
+    user = get_user_by_username(username)
+    return user.groups if user else None
+
+def get_pfp_link(username):
+    user = get_user_by_username(username)
+    return user.pfp_link if user else None
 
 def init_db():
     # Check if the database exists, and create it if not
     engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
     if not database_exists(engine.url):
         create_database(engine.url)
+        
         print("Database created.")
     else:
         print("Database already exists.")
@@ -118,6 +177,44 @@ def get_projects():
     })
 
 
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    if check_user_credentials(username, password):
+        return jsonify({"status": 200, "message": "success"})
+    else:
+        return jsonify({"status": 401, "message": "Invalid credentials"})
+
+@app.route('/signUp', methods=['POST'])
+def sign_up():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    email = data.get('email')
+    result = create_user(username, password, email)
+    return jsonify(result)
+
+@app.route('/getProfile', methods=['GET'])
+def get_profile():
+    username = request.args.get('username')
+    if not username:
+        return jsonify({"success": False, "message": "Username is required"}), 400
+    
+    profile = {
+        "email": get_email(username),
+        "bio": get_bio(username),
+        "display_name": get_display_name(username),
+        "status": get_status(username),
+        "groups": get_groups(username),
+        "pfp_link": get_pfp_link(username)
+    }
+    
+    if all(value is not None for value in profile.values()):
+        return jsonify({"success": True, "profile": profile})
+    else:
+        return jsonify({"success": False, "message": "User not found"}), 404
 
 @app.route('/authorize')
 def authorize():
@@ -298,6 +395,39 @@ def logout():
             'error': 'Logout failed',
             'message': str(e)
         }), 500
+  
+@app.route('/api/upload-profile-picture', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 401
+    
+    if file and allowed_file(file.filename):
+        # Secure the filename
+        filename = secure_filename(file.filename)
+        
+        # Add timestamp to ensure uniqueness
+        import time
+        timestamp = str(int(time.time()))
+        filename = f"{timestamp}_{filename}"
+        
+        # Create upload folder if it doesn't exist
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        
+        # Save the file
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+        
+        return jsonify({
+            'success': True,
+            'imagePath': f'/profile-pictures/{filename}'
+        })
+    
+    return jsonify({'error': 'File type not allowed'}), 404
 
 # @app.route('/search', methods=['POST', 'OPTIONS'])
 # def search():
@@ -367,9 +497,94 @@ def logout():
 #     except Exception as e:
 #         return f"Error: {e}", 404
 
+def insert_dummy_data():
+    # Insert dummy data into the User table
+    user1 = User(
+        username="john_doe",
+        password="password123",
+        email="john@example.com",
+        bio="Just a regular user.",
+        display_name="John Doe",
+        status="Active",
+        groups=[1, 2],
+        pfp_link="https://example.com/profile/john.jpg"
+    )
+
+    user2 = User(
+        username="jane_smith",
+        password="mypassword",
+        email="jane@example.com",
+        bio="I love coding and coffee.",
+        display_name="Jane Smith",
+        status="Busy",
+        groups=[1],
+        pfp_link="https://example.com/profile/jane.jpg"
+    )
+
+    # Add users to the session and commit to generate account_ids
+    
+    db.session.add(user1)
+    print("1")
+    db.session.add(user2)
+    print("2")
+    db.session.commit()
+
+    # Use the generated account_ids for UserGCAL
+    user_gcal1 = UserGCAL(
+        account_id=user1.account_id,  # Use the account_id from user1
+        username="john_doe",
+        client_id="client123",
+        project_id="project123",
+        auth_uri="https://example.com/auth",
+        token_uri="https://example.com/token",
+        auth_provider_x509_cert_url="https://example.com/cert",
+        client_secret="secret123",
+        redirect_uri="https://example.com/redirect"
+    )
+
+    user_gcal2 = UserGCAL(
+        account_id=user2.account_id,  # Use the account_id from user2
+        username="jane_smith",
+        client_id="client456",
+        project_id="project456",
+        auth_uri="https://example.com/auth2",
+        token_uri="https://example.com/token2",
+        auth_provider_x509_cert_url="https://example.com/cert2",
+        client_secret="secret456",
+        redirect_uri="https://example.com/redirect2"
+    )
+
+    # Insert dummy data into the Groups table
+    group1 = Groups(
+        group_id=1,
+        group_name="Developers",
+        users=[user1.account_id, user2.account_id]  # Use account_ids from users
+    )
+
+    group2 = Groups(
+        group_id=2,
+        group_name="Designers",
+        users=[user1.account_id]  # Use account_id from user1
+    )
+
+    # Add and commit all the dummy data to the database
+    db.session.add(user_gcal1)
+    print("3")
+    db.session.add(user_gcal2)
+    print("4")
+    db.session.add(group1)
+    print("5")
+    db.session.add(group2)
+    print("6")
+    db.session.commit()
+
+    print("Dummy data inserted successfully.")
+
 # Initialize the database on app startup
 with app.app_context():
     init_db()
+    # insert_dummy_data()
+    
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5000,debug=True)
