@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
-import 'react-image-crop/dist/ReactCrop.css';
+// import 'react-image-crop/dist/ReactCrop.css';
 import Alert from '../componenets/Alert';
 
 const ProfilePictureUpload = () => {

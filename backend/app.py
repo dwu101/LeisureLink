@@ -91,6 +91,49 @@ class Groups(db.Model):
         self.group_name=group_name
         self.users=users
 
+# Helper Functions
+def get_user_by_username(username):
+    return User.query.filter_by(username=username).first()
+
+def check_user_credentials(username, password):
+    user = get_user_by_username(username)
+    if user and user.password == password:
+        return True
+    return False
+
+def create_user(username, password, email):
+    try:
+        new_user = User(username=username, password=password, email=email, bio="", display_name="", status="", groups=[], pfp_link="")
+        db.session.add(new_user)
+        db.session.commit()
+        return {"success": True, "message": "User created successfully."}
+    except IntegrityError:
+        db.session.rollback()
+        return {"success": False, "message": "Username or email already exists."}
+
+def get_email(username):
+    user = get_user_by_username(username)
+    return user.email if user else None
+
+def get_bio(username):
+    user = get_user_by_username(username)
+    return user.bio if user else None
+
+def get_display_name(username):
+    user = get_user_by_username(username)
+    return user.display_name if user else None
+
+def get_status(username):
+    user = get_user_by_username(username)
+    return user.status if user else None
+
+def get_groups(username):
+    user = get_user_by_username(username)
+    return user.groups if user else None
+
+def get_pfp_link(username):
+    user = get_user_by_username(username)
+    return user.pfp_link if user else None
 
 def init_db():
     # Check if the database exists, and create it if not
@@ -132,6 +175,44 @@ def get_projects():
     })
 
 
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    if check_user_credentials(username, password):
+        return jsonify({"status": 200, "message": "success"})
+    else:
+        return jsonify({"status": 401, "message": "Invalid credentials"})
+
+@app.route('/signUp', methods=['POST'])
+def sign_up():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    email = data.get('email')
+    result = create_user(username, password, email)
+    return jsonify(result)
+
+@app.route('/getProfile', methods=['GET'])
+def get_profile():
+    username = request.args.get('username')
+    if not username:
+        return jsonify({"success": False, "message": "Username is required"}), 400
+    
+    profile = {
+        "email": get_email(username),
+        "bio": get_bio(username),
+        "display_name": get_display_name(username),
+        "status": get_status(username),
+        "groups": get_groups(username),
+        "pfp_link": get_pfp_link(username)
+    }
+    
+    if all(value is not None for value in profile.values()):
+        return jsonify({"success": True, "profile": profile})
+    else:
+        return jsonify({"success": False, "message": "User not found"}), 404
 
 @app.route('/authorize')
 def authorize():
