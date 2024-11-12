@@ -69,7 +69,8 @@ class UserGCAL(db.Model):
 
     
 
-    def __init__(self, username, client_id, project_id, auth_uri, token_uri, auth_provider_x509_cert_url, client_secret, redirect_uri):
+    def __init__(self, account_id, username, client_id, project_id, auth_uri, token_uri, auth_provider_x509_cert_url, client_secret, redirect_uri):
+        self.account_id=account_id
         self.username=username
         self.client_id=client_id
         self.project_id=project_id
@@ -140,6 +141,7 @@ def init_db():
     engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
     if not database_exists(engine.url):
         create_database(engine.url)
+        
         print("Database created.")
     else:
         print("Database already exists.")
@@ -495,9 +497,94 @@ def upload_file():
 #     except Exception as e:
 #         return f"Error: {e}", 404
 
+def insert_dummy_data():
+    # Insert dummy data into the User table
+    user1 = User(
+        username="john_doe",
+        password="password123",
+        email="john@example.com",
+        bio="Just a regular user.",
+        display_name="John Doe",
+        status="Active",
+        groups=[1, 2],
+        pfp_link="https://example.com/profile/john.jpg"
+    )
+
+    user2 = User(
+        username="jane_smith",
+        password="mypassword",
+        email="jane@example.com",
+        bio="I love coding and coffee.",
+        display_name="Jane Smith",
+        status="Busy",
+        groups=[1],
+        pfp_link="https://example.com/profile/jane.jpg"
+    )
+
+    # Add users to the session and commit to generate account_ids
+    
+    db.session.add(user1)
+    print("1")
+    db.session.add(user2)
+    print("2")
+    db.session.commit()
+
+    # Use the generated account_ids for UserGCAL
+    user_gcal1 = UserGCAL(
+        account_id=user1.account_id,  # Use the account_id from user1
+        username="john_doe",
+        client_id="client123",
+        project_id="project123",
+        auth_uri="https://example.com/auth",
+        token_uri="https://example.com/token",
+        auth_provider_x509_cert_url="https://example.com/cert",
+        client_secret="secret123",
+        redirect_uri="https://example.com/redirect"
+    )
+
+    user_gcal2 = UserGCAL(
+        account_id=user2.account_id,  # Use the account_id from user2
+        username="jane_smith",
+        client_id="client456",
+        project_id="project456",
+        auth_uri="https://example.com/auth2",
+        token_uri="https://example.com/token2",
+        auth_provider_x509_cert_url="https://example.com/cert2",
+        client_secret="secret456",
+        redirect_uri="https://example.com/redirect2"
+    )
+
+    # Insert dummy data into the Groups table
+    group1 = Groups(
+        group_id=1,
+        group_name="Developers",
+        users=[user1.account_id, user2.account_id]  # Use account_ids from users
+    )
+
+    group2 = Groups(
+        group_id=2,
+        group_name="Designers",
+        users=[user1.account_id]  # Use account_id from user1
+    )
+
+    # Add and commit all the dummy data to the database
+    db.session.add(user_gcal1)
+    print("3")
+    db.session.add(user_gcal2)
+    print("4")
+    db.session.add(group1)
+    print("5")
+    db.session.add(group2)
+    print("6")
+    db.session.commit()
+
+    print("Dummy data inserted successfully.")
+
 # Initialize the database on app startup
 with app.app_context():
     init_db()
+    # insert_dummy_data()
+    
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5000,debug=True)
