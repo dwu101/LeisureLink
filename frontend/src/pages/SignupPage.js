@@ -17,7 +17,7 @@ function SignupPage() {
     console.log(password);
     //INSERT API CALL HERE
     try {
-      const response = await axios.post('http://localhost:5000/api/signup', {
+      const response = await axios.post('/signup', {
         email,
         username,
         password,

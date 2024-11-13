@@ -8,6 +8,7 @@ import SearchPage from './pages/SearchPage';
 import ProfilePage from './pages/ProfilePage';
 import UserProfile from './pages/EditProfile';
 import ProfilePictureUpload from './pages/ProfilePictureUpload';
+// import ProfilePage from './pages/ProfilePage';
 
 // Export all routes as an array of Route components
 const routes = [
@@ -19,6 +20,8 @@ const routes = [
   <Route path="/ProfilePage" element={<ProfilePage />} key="ProfilePage" />,
   <Route path="/UserProfile" element={<UserProfile />} key="UserProfile" />,
   <Route path="/ProfilePictureUpload" element={<ProfilePictureUpload />} key="ProfilePictureUpload" />,
+  // <Route path="/ProfilePage" element={<ProfilePage />} key="ProfilePage" />,
+
 ];
 
 export default routes;

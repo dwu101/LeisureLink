@@ -3,9 +3,13 @@ import './LoginSignupPage.css';
 import { Link } from 'react-router-dom';  
 import HelloWorld from '../componenets/HelloWorld';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+
 
 function LoginPage() {
-  const [email, setEmail] = useState('');
+  const navigate = useNavigate();
+
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState(''); // Add this line to define setMessage
 
@@ -14,13 +18,16 @@ function LoginPage() {
     event.preventDefault();
     //INSERT API CALL HERE
     try {
-      const response = await axios.post('http://localhost:5000/api/login', {
-        email,
+      const response = await axios.post('/login', {
+        username,
         password,
       });
 
       // Handle successful login
       setMessage(response.data.message); // Or redirect, etc.
+      sessionStorage.setItem('username', username)
+      navigate('/ProfilePictureUpload');               // Go to new page
+
     } catch (error) {
       // Handle errors (e.g., incorrect credentials)
       setMessage(error.response?.data?.error || "Login failed. Please try again.");
@@ -35,11 +42,11 @@ function LoginPage() {
       
       <form onSubmit={handleSubmit} className="form">
         <div className="input-container">
-          <label className="label">Email:</label>
+          <label className="label">Username:</label>
           <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             required
             className="input"
           />
