@@ -108,7 +108,7 @@ def create_user(username, password, email):
         db.session.add(new_user)
         db.session.commit()
         return {"success": True, "message": "User created successfully."}
-    except IntegrityError:
+    except Exception:
         db.session.rollback()
         return {"success": False, "message": "Username or email already exists."}
 
@@ -215,6 +215,196 @@ def get_profile():
         return jsonify({"success": True, "profile": profile})
     else:
         return jsonify({"success": False, "message": "User not found"}), 404
+
+@app.route('/addGroup', methods=['POST'])
+def add_group():
+    data = request.json
+    username = data.get('username')
+    group_names = data.get('groups', [])
+
+    if not username or not isinstance(group_names, list):
+        return jsonify({"success": False, "message": "Invalid input"}), 400
+
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({"success": False, "message": "User not found"}), 404
+
+    # Add the groups to the database
+    for group_name in group_names:
+        group = Groups.query.filter_by(group_name=group_name).first()
+        if not group:
+            group = Groups(group_name=group_name, users=[user.account_id])
+            db.session.add(group)
+        elif user.account_id not in group.users:
+            group.users.append(user.account_id)
+
+    db.session.commit()
+    return jsonify({"success": True, "message": "Groups added successfully"})
+
+# Endpoint to delete groups for a user
+@app.route('/deleteGroup', methods=['POST'])
+def delete_group():
+    data = request.json
+    username = data.get('username')
+    group_names = data.get('groups', [])
+
+    if not username or not isinstance(group_names, list):
+        return jsonify({"success": False, "message": "Invalid input"}), 400
+
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({"success": False, "message": "User not found"}), 404
+
+    # Delete the groups from the user's list
+    for group_name in group_names:
+        group = Groups.query.filter_by(group_name=group_name).first()
+        if group and user.account_id in group.users:
+            group.users.remove(user.account_id)
+            if not group.users:
+                db.session.delete(group)  # Delete the group if no users remain
+
+    db.session.commit()
+    return jsonify({"success": True, "message": "Groups deleted successfully"})
+
+# Endpoint to search for users or groups
+@app.route('/search', methods=['GET'])
+def search():
+    query = request.args.get('query', '')
+    search_by = request.args.get('searchBy', '')
+
+    if not query or search_by not in ["username", "displayName", "group"]:
+        return jsonify({"success": False, "message": "Invalid search parameters"}), 400
+
+    results = []
+
+    if search_by == "username":
+        users = User.query.filter(User.username.ilike(f"%{query}%")).all()
+    elif search_by == "displayName":
+        users = User.query.filter(User.display_name.ilike(f"%{query}%")).all()
+    elif search_by == "group":
+        groups = Groups.query.filter(Groups.group_name.ilike(f"%{query}%")).all()
+        user_ids = {user_id for group in groups for user_id in group.users}
+        users = User.query.filter(User.account_id.in_(user_ids)).all()
+    else:
+        return jsonify({"success": False, "message": "Invalid search type"}), 400
+
+    for user in users:
+        results.append({
+            "pfp_link": user.pfp_link,
+            "username": user.username,
+            "displayName": user.display_name
+        })
+
+    return jsonify({"success": True, "results": results})
+
+# Endpoint to change password
+@app.route('/changePassword', methods=['POST'])
+def change_password():
+    data = request.json
+    username = data.get('username')
+    new_password = data.get('newPassword')
+
+    if not username or not new_password:
+        return jsonify({"success": False, "message": "Username and new password are required"}), 400
+
+    user = get_user_by_username(username)
+    if not user:
+        return jsonify({"success": False, "message": "User not found"}), 404
+
+    user.password = new_password
+    db.session.commit()
+    return jsonify({"success": True, "message": "Password changed successfully"})
+
+# Endpoint to change email
+@app.route('/changeEmail', methods=['POST'])
+def change_email():
+    data = request.json
+    username = data.get('username')
+    new_email = data.get('newEmail')
+
+    if not username or not new_email:
+        return jsonify({"success": False, "message": "Username and new email are required"}), 400
+
+    user = get_user_by_username(username)
+    if not user:
+        return jsonify({"success": False, "message": "User not found"}), 404
+
+    user.email = new_email
+    db.session.commit()
+    return jsonify({"success": True, "message": "Email changed successfully"})
+
+# Endpoint to change bio
+@app.route('/changeBio', methods=['POST'])
+def change_bio():
+    data = request.json
+    username = data.get('username')
+    new_bio = data.get('newBio')
+
+    if not username or new_bio is None:
+        return jsonify({"success": False, "message": "Username and new bio are required"}), 400
+
+    user = get_user_by_username(username)
+    if not user:
+        return jsonify({"success": False, "message": "User not found"}), 404
+
+    user.bio = new_bio
+    db.session.commit()
+    return jsonify({"success": True, "message": "Bio changed successfully"})
+
+# Endpoint to change display name
+@app.route('/changeDisplayName', methods=['POST'])
+def change_display_name():
+    data = request.json
+    username = data.get('username')
+    new_display_name = data.get('newDisplayName')
+
+    if not username or not new_display_name:
+        return jsonify({"success": False, "message": "Username and new display name are required"}), 400
+
+    user = get_user_by_username(username)
+    if not user:
+        return jsonify({"success": False, "message": "User not found"}), 404
+
+    user.display_name = new_display_name
+    db.session.commit()
+    return jsonify({"success": True, "message": "Display name changed successfully"})
+
+# Endpoint to change status
+@app.route('/changeStatus', methods=['POST'])
+def change_status():
+    data = request.json
+    username = data.get('username')
+    new_status = data.get('newStatus')
+
+    if not username or not new_status:
+        return jsonify({"success": False, "message": "Username and new status are required"}), 400
+
+    user = get_user_by_username(username)
+    if not user:
+        return jsonify({"success": False, "message": "User not found"}), 404
+
+    user.status = new_status
+    db.session.commit()
+    return jsonify({"success": True, "message": "Status changed successfully"})
+
+# Endpoint to change profile picture link
+@app.route('/changePFP', methods=['POST'])
+def change_pfp():
+    data = request.json
+    username = data.get('username')
+    new_pfp_link = data.get('newPFPLink')
+
+    if not username or not new_pfp_link:
+        return jsonify({"success": False, "message": "Username and new profile picture link are required"}), 400
+
+    user = get_user_by_username(username)
+    if not user:
+        return jsonify({"success": False, "message": "User not found"}), 404
+
+    user.pfp_link = new_pfp_link
+    db.session.commit()
+    return jsonify({"success": True, "message": "Profile picture link changed successfully"})
+
 
 @app.route('/authorize')
 def authorize():
