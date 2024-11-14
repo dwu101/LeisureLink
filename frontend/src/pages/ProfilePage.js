@@ -73,7 +73,8 @@ const ProfilePage = () => {
     <div className="profile-container">
       <aside className="profile-sidebar relative flex flex-col h-full">
         <div className="profile-image-container">
-          <img src="/assets/diddyparty.png" alt="Profile" className="profile-image" />
+          
+          <img src="assets/diddyparty.png" alt="Profile" className="profile-image" />
         </div>
         
         <div className="profile-info flex-grow">
@@ -111,22 +112,13 @@ const ProfilePage = () => {
       <main className="profile-main">
         <div className="featured-project">
           <h2>Featured Project</h2>
-          <p>
-            Currently working on a revolutionary web application that combines AI 
-            with user experience design. This project showcases the latest in 
-            frontend development techniques and responsive design patterns.
-          </p>
-          <div className="project-details">
-            <div><strong>Status:</strong> In Progress</div>
-            <div><strong>Team Size:</strong> 5 members</div>
-            <div><strong>Technologies:</strong> React, Node.js, TensorFlow.js</div>
-          </div>
+
+
         </div>
 
         <div className="posts-grid">
           {posts.map(post => (
             <article key={post.id} className="post-card">
-              <img src="/assets/diddyparty.png" alt="" className="post-image" />
               <div className="post-content">
                 <h3>{post.title}</h3>
                 <p>{post.content}</p>
