@@ -1,55 +1,27 @@
 import './ProfilePage.css';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect} from 'react';
+import { useParams } from 'react-router-dom';
 
 const ProfilePage = () => {
   const [isButtonClicked, setIsButtonClicked] = useState(false);
   const [projects, setProjects] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState(null);
+  const {username} = useParams();
 
-  const posts = [
-    {
-      id: 1,
-      title: "Latest Update",
-      content: "Just launched a new feature that improves user experience by 50%!"
-    },
-    {
-      id: 2,
-      title: "Team Collaboration",
-      content: "Working with an amazing team on our newest project. Stay tuned for updates!"
-    },
-    {
-      id: 3,
-      title: "Tech Talk",
-      content: "Gave a presentation on modern CSS practices at the local dev meetup."
-    },
-    {
-      id: 4,
-      title: "Code Review Tips",
-      content: "Here are my top 5 tips for effective code reviews and maintaining code quality."
-    },
-    {
-      id: 5,
-      title: "Weekend Project",
-      content: "Built a cool side project using React and Node.js. Check it out!"
-    },
-    {
-      id: 6,
-      title: "Design System Update",
-      content: "Just completed a major update to our company's design system."
-    }
-  ];
+
 
   useEffect(() => {
-    const fetchProjects = async () => {
+    const fetchProfile = async (username) => {
       try {
-        const response = await fetch('http://localhost:5000/getprojects');
+        const response = await fetch(`http://localhost:5000/getProfile?username=${username}`);
         const result = await response.json();
         
         if (result.success) {
-          setProjects(result.data);
+          setProfile(result.profile);
         } else {
-          setError('Failed to fetch projects');
+          setError(result.message || 'Failed to fetch profile');
         }
       } catch (err) {
         setError('Error connecting to server');
@@ -57,8 +29,9 @@ const ProfilePage = () => {
         setLoading(false);
       }
     };
+  
 
-    fetchProjects();
+    fetchProfile(username);
   }, []);
 
   const handleCircleClick = () => {
@@ -69,22 +42,33 @@ const ProfilePage = () => {
     window.location.href = "https://localhost:3000/GoogleAuth";
   };
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
   return (
     <div className="profile-container">
       <aside className="profile-sidebar relative flex flex-col h-full">
         <div className="profile-image-container">
-          
-          <img src="assets/diddyparty.png" alt="Profile" className="profile-image" />
+          <img 
+            src={profile?.pfp_link || "/assets/diddyparty.png"} 
+            alt="Profile" 
+            className="profile-image" 
+          />
         </div>
         
         <div className="profile-info flex-grow">
-          <InfoField label="Name" value="John Doe" />
-          <InfoField label="Username" value="whomadethatmessking" />
-          <InfoField label="Contact" value="john.doe@example.com" />
-          <InfoField label="Location" value="San Francisco, CA" />
+          <InfoField label="Name" value={profile?.display_name || 'Loading...'} />
+          <InfoField label="Username" value={username} />
+          <InfoField label="Contact" value={profile?.email || 'Loading...'} />
+          <InfoField label="Status" value={profile?.status || 'Loading...'} />
           <InfoField 
             label="Bio" 
-            value="Frontend developer passionate about creating beautiful and functional web experiences." 
+            value={profile?.bio || 'Loading...'} 
           />
         </div>
 
@@ -111,13 +95,24 @@ const ProfilePage = () => {
 
       <main className="profile-main">
         <div className="featured-project">
-          <h2>Featured Project</h2>
-
-
+          <h2>Groups</h2>
+          <div className="groups-list">
+            {profile?.groups?.map((group, index) => {
+              // Assuming each group is an object with id, title, and content
+              // If your Python get_groups() returns a different structure, 
+              // adjust the rendering accordingly
+              return (
+                <div key={index} className="group-item">
+                  <h3>{group.title}</h3>
+                  <p>{group.content}</p>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         <div className="posts-grid">
-          {posts.map(post => (
+          {profile.groups.map(post => (
             <article key={post.id} className="post-card">
               <div className="post-content">
                 <h3>{post.title}</h3>
