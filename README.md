@@ -1,4 +1,4 @@
-# LeisureLink sucks lucas is fat
+# LeisureLink 
 
 ## Get Started
 

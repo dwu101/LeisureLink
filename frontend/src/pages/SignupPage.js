@@ -2,8 +2,12 @@ import React, { useState } from 'react';
 import './LoginSignupPage.css';  // Import the CSS file
 import { Link } from 'react-router-dom';  // Import Link
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+
 
 function SignupPage() {
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -17,7 +21,7 @@ function SignupPage() {
     console.log(password);
     //INSERT API CALL HERE
     try {
-      const response = await axios.post('http://localhost:5000/api/signup', {
+      const response = await axios.post('/signup', {
         email,
         username,
         password,
@@ -25,6 +29,7 @@ function SignupPage() {
 
       // Display success message or redirect as needed
         setMessage(response.data.message);
+        navigate("/ProfilePage")
       } catch (error) {
         setMessage(error.response?.data?.error || "Signup failed. Please try again.");
       }
