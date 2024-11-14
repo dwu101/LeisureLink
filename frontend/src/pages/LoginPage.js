@@ -26,13 +26,21 @@ function LoginPage() {
       // Handle successful login
       setMessage(response.data.message); // Or redirect, etc.
       sessionStorage.setItem('username', username)
-      navigate('/ProfilePictureUpload');               // Go to new page
+      navigate('/ProfilePage');               // Go to new page
 
     } catch (error) {
       // Handle errors (e.g., incorrect credentials)
       setMessage(error.response?.data?.error || "Login failed. Please try again.");
     }
 
+
+
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSubmit(e);
+    }
   };
 
   return (
@@ -40,7 +48,7 @@ function LoginPage() {
       <h1>Welcome to LeisureLink!</h1>
       <h2>Please Log In</h2>
       
-      <form onSubmit={handleSubmit} className="form">
+      <form onSubmit={handleSubmit} className="form" onKeyPress={handleKeyPress}>
         <div className="input-container">
           <label className="label">Username:</label>
           <input
