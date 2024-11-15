@@ -16,9 +16,8 @@ const ProfilePage = () => {
 
 
   useEffect(() => {
-    const fetchProfile = async (username) => {
 
-    const fetchProjects = async () => {
+    const fetchProfile = async () => {
       console.log(sessionStorage.getItem('username'))
       try {
         const response = await fetch(`/getProfile?username=${username}`);
@@ -38,7 +37,7 @@ const ProfilePage = () => {
   
 
     fetchProfile();
-  }, [username]);
+  }, []);
 
   const handleCircleClick = () => {
     setIsButtonClicked(!isButtonClicked);
