@@ -111,6 +111,34 @@ def create_user(username, password, email):
     except Exception:
         db.session.rollback()
         return {"success": False, "message": "Username or email already exists."}
+    
+def create_user_GCAL():
+    pass
+    #user_gcal2 = UserGCAL(
+    #     account_id=user2.account_id,  # Use the account_id from user2
+    #     username="jane_smith",
+    #     client_id="client456",
+    #     project_id="project456",
+    #     auth_uri="https://example.com/auth2",
+    #     token_uri="https://example.com/token2",
+    #     auth_provider_x509_cert_url="https://example.com/cert2",
+    #     client_secret="secret456",
+    #     redirect_uri="https://example.com/redirect2"
+    # )
+    # curr = cookies[session['state']]
+    # try:
+    #     if 'state' not in session:
+    #         return jsonify({'error': 'Not authenticated'}), 401
+
+    #     # Get credentials from session
+    #     credentials = Credentials(
+    #         token=curr['token'],
+    #         refresh_token=curr['refresh_token'],
+    #         token_uri=curr['token_uri'],
+    #         client_id=curr['client_id'],
+    #         client_secret=curr['client_secret'],
+    #         scopes=curr['scopes']
+    #     )
 
 def get_email(username):
     user = get_user_by_username(username)
@@ -145,6 +173,8 @@ def init_db():
         print("Database created.")
     else:
         print("Database already exists.")
+        db.drop_all()
+
     db.create_all()  # Create tables based on the models defined
 
 @app.before_request
@@ -182,9 +212,13 @@ def login():
     data = request.json
     username = data.get('username')
     password = data.get('password')
+    print(username)
+    print(password)
     if check_user_credentials(username, password):
+        print("A")
         return jsonify({"status": 200, "message": "success"})
     else:
+        print("B")
         return jsonify({"status": 401, "message": "Invalid credentials"})
 
 @app.route('/signUp', methods=['POST'])
@@ -199,6 +233,7 @@ def sign_up():
 @app.route('/getProfile', methods=['GET'])
 def get_profile():
     username = request.args.get('username')
+    print(username)
     if not username:
         return jsonify({"success": False, "message": "Username is required"}), 400
     
@@ -477,6 +512,8 @@ def oauth2callback():
                           samesite='Lax')
 
         # Redirect after ensuring cookies are set
+
+                                                                                                #INSERT FUNCTION TO ADD GCAL DATA INTO DB
         return redirect('http://localhost:3000/AddEvent')
 
     except Exception as e:
@@ -696,8 +733,8 @@ def insert_dummy_data():
         bio="Just a regular user.",
         display_name="John Doe",
         status="Active",
-        groups=[1, 2],
-        pfp_link="https://example.com/profile/john.jpg"
+        groups=["1", "2"],
+        pfp_link="/profile-pictures/TESTING.jpg"
     )
 
     user2 = User(
@@ -707,8 +744,8 @@ def insert_dummy_data():
         bio="I love coding and coffee.",
         display_name="Jane Smith",
         status="Busy",
-        groups=[1],
-        pfp_link="https://example.com/profile/jane.jpg"
+        groups=["1"],
+        pfp_link="/profile-pictures/TESTING.jpg"
     )
 
     # Add users to the session and commit to generate account_ids
@@ -773,7 +810,7 @@ def insert_dummy_data():
 # Initialize the database on app startup
 with app.app_context():
     init_db()
-    # insert_dummy_data()
+    insert_dummy_data()
     
 
 if __name__ == '__main__':

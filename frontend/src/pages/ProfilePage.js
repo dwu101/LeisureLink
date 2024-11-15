@@ -2,7 +2,11 @@ import './ProfilePage.css';
 import React, { useState, useEffect} from 'react';
 import { useParams } from 'react-router-dom';
 
+
 import { Link } from 'react-router-dom';  
+
+ 
+
 
 const ProfilePage = () => {
   const [isButtonClicked, setIsButtonClicked] = useState(false);
@@ -10,7 +14,8 @@ const ProfilePage = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
-  const {username} = useParams();
+  const [username, setUsername] = useState(sessionStorage.getItem('username'));
+  
 
 
 
@@ -19,8 +24,8 @@ const ProfilePage = () => {
     const fetchProfile = async () => {
       console.log(sessionStorage.getItem('username'))
       try {
-        const response = await fetch(`http://localhost:5000/getProfile?username=${username}`);
-        const result = await response.json();
+        const response = await fetch(`/getProfile?username=${username}`);
+          const result = await response.json();
         
         if (result.success) {
           setProfile(result.profile);
@@ -35,16 +40,22 @@ const ProfilePage = () => {
     };
   
 
-    fetchProfile(username);
+    fetchProfile();
   }, []);
 
   const handleCircleClick = () => {
     setIsButtonClicked(!isButtonClicked);
   };
 
-  // const handleLinkButtonClick = () => {
-  //   window.location.href = "https://localhost:3000/GoogleAuth";
-  // };
+  const handleToggle = () => {
+    if (profile.status === "Active"){
+      setProfile(prev => ({ ...prev, status: "Inactive" }));
+    }
+    else{
+      setProfile(prev => ({ ...prev, status: "Active" }));
+    }
+    console.log(profile.status);
+  };
 
   if (loading) {
     return <div>Loading...</div>;
@@ -55,11 +66,13 @@ const ProfilePage = () => {
   }
 
   return (
+      
     <div className="profile-container">
+
       <aside className="profile-sidebar relative flex flex-col h-full">
         <div className="profile-image-container">
           <img 
-            src={profile?.pfp_link || "/assets/diddyparty.png"} 
+            src={profile?.pfp_link} 
             alt="Profile" 
             className="profile-image" 
           />
@@ -68,33 +81,33 @@ const ProfilePage = () => {
         <div className="profile-info flex-grow">
           <InfoField label="Name" value={profile?.display_name || 'Loading...'} />
           <InfoField label="Username" value={username} />
-          <InfoField label="Contact" value={profile?.email || 'Loading...'} />
+          <InfoField label="Email" value={profile?.email || 'Loading...'} />
           <InfoField label="Status" value={profile?.status || 'Loading...'} />
+          
+          <button
+            status={profile.status}
+            onClick={handleToggle}
+          >{profile.status==="Active" ? "Click to become Inactive" : "Click to become Active"}</button>
+
           <InfoField 
             label="Bio" 
             value={profile?.bio || 'Loading...'} 
           />
+
+          <InfoField label="Google Calendar" value={profile?.status || 'Loading...'} />
         </div>
 
         <div className="button-container">
-          <button 
-            onClick={handleCircleClick}
-            className={`circle-button ${isButtonClicked ? 'clicked' : ''}`}
-            aria-label="Action button"
-          >
-            <span className="button-text">
-              {isButtonClicked ? 'We going!' : 'Lets go'}
-            </span>
-          </button>
+          
           <Link to="/GoogleAuth">
-          <button 
-            // onClick={handleLinkButtonClick}
-            className="circle-button link-button"
-            aria-label="Link button"
-          >
-            <span className="button-text">Visit</span>
-          </button>
+          <button style={{marginTop:"20px"}}>Link/Change GCal</button>
+          </Link>
+        </div>
 
+        <div className="button-container">
+          
+          <Link to="/EditProfile">
+          <button style={{marginTop:"50px", fontSize: "20px"}}>Edit Profile</button>
           </Link>
         </div>
       </aside>
@@ -104,29 +117,16 @@ const ProfilePage = () => {
           <h2>Groups</h2>
           <div className="groups-list">
             {profile?.groups?.map((group, index) => {
-              // Assuming each group is an object with id, title, and content
-              // If your Python get_groups() returns a different structure, 
-              // adjust the rendering accordingly
               return (
                 <div key={index} className="group-item">
-                  <h3>{group.title}</h3>
-                  <p>{group.content}</p>
+                  <h3>{group}</h3>
+                  {/* <p>{group.content}</p> */}
                 </div>
               );
             })}
           </div>
         </div>
 
-        <div className="posts-grid">
-          {profile.groups.map(post => (
-            <article key={post.id} className="post-card">
-              <div className="post-content">
-                <h3>{post.title}</h3>
-                <p>{post.content}</p>
-              </div>
-            </article>
-          ))}
-        </div>
       </main>
     </div>
   );

@@ -17,21 +17,26 @@ function LoginPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     //INSERT API CALL HERE
-    try {
-      const response = await axios.post('/login', {
-        username,
-        password,
-      });
+      try {
+        const response = await axios.post('/login', {
+          username,
+          password,
+        });
+        if (response.data.status === 200){
+          setMessage(response.data.message); // Or redirect, etc.
+          sessionStorage.setItem('username', username)
+          console.log("SUCCESS")
+          navigate('/ProfilePage');
+        }  
+        else{
+          setMessage(response?.data?.error || "Login failed. Please try again.");
 
-      // Handle successful login
-      setMessage(response.data.message); // Or redirect, etc.
-      sessionStorage.setItem('username', username)
-      navigate('/ProfilePage');               // Go to new page
+        }
 
-    } catch (error) {
-      // Handle errors (e.g., incorrect credentials)
-      setMessage(error.response?.data?.error || "Login failed. Please try again.");
-    }
+      } catch (error) {
+        // Handle errors (e.g., incorrect credentials)
+        setMessage(error.response?.data?.error || "Login failed. Please try again.");
+      }
 
 
 
@@ -50,7 +55,7 @@ function LoginPage() {
       
       <form onSubmit={handleSubmit} className="form" onKeyPress={handleKeyPress}>
         <div className="input-container">
-          <label className="label">Username:</label>
+          <label className="label" style={{marginRight: 10}}>Username:</label>
           <input
             type="text"
             value={username}
@@ -60,7 +65,7 @@ function LoginPage() {
           />
         </div>
         <div className="input-container">
-          <label className="label">Password:</label>
+          <label className="label" style={{marginRight: 14}}>Password:</label>
           <input
             type="password"
             value={password}
