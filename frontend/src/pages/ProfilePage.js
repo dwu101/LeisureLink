@@ -2,7 +2,6 @@ import './ProfilePage.css';
 import React, { useState, useEffect} from 'react';
 import { useParams } from 'react-router-dom';
 
-import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';  
 
 const ProfilePage = () => {
@@ -16,9 +15,8 @@ const ProfilePage = () => {
 
 
   useEffect(() => {
-    const fetchProfile = async (username) => {
 
-    const fetchProjects = async () => {
+    const fetchProfile = async () => {
       console.log(sessionStorage.getItem('username'))
       try {
         const response = await fetch(`http://localhost:5000/getProfile?username=${username}`);
