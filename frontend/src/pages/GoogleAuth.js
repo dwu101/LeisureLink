@@ -4,6 +4,8 @@ import axios from 'axios';
 axios.defaults.withCredentials = true;
 
 const GoogleAuth = () => {
+  const username = sessionStorage.getItem('username');
+
 
   useEffect(() => {
     const initAuth = async () => {
@@ -27,7 +29,10 @@ const GoogleAuth = () => {
         withCredentials: true,
         headers: {
           'Accept': 'application/json'
-        }
+        },
+        params: {
+          "username": username // Adding username as a query parameter
+        },
       });
       window.location.href = response.data.authUrl;
       await delay(200);

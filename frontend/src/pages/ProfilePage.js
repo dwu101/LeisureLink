@@ -15,14 +15,13 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
   const [username, setUsername] = useState(sessionStorage.getItem('username'));
+  const [gcalLinked, setGcalLinked] = useState(false);
   
-
-
-
   useEffect(() => {
 
     const fetchProfile = async () => {
       console.log(sessionStorage.getItem('username'))
+
       try {
         const response = await fetch(`/getProfile?username=${username}`);
           const result = await response.json();
@@ -37,23 +36,79 @@ const ProfilePage = () => {
       } finally {
         setLoading(false);
       }
+
+      try {
+        const responseLink = await fetch('/gcalLinked', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username: username }),
+        });
+      
+        const resultLink = await responseLink.json();
+        console.log("AAAA");
+        console.log(resultLink);
+      
+        if (resultLink[1] === true) {
+          setGcalLinked(true);
+        } else {
+          setGcalLinked(false);
+        }
+      } catch (err) {
+        setError('Error connecting to server');
+      } finally {
+        setLoading(false);
+      }
+      
     };
   
 
     fetchProfile();
-  }, []);
+  }, [gcalLinked]);
 
   const handleCircleClick = () => {
     setIsButtonClicked(!isButtonClicked);
   };
 
-  const handleToggle = () => {
+  const handleToggle = async () => {
     if (profile.status === "Active"){
       setProfile(prev => ({ ...prev, status: "Inactive" }));
     }
     else{
       setProfile(prev => ({ ...prev, status: "Active" }));
     }
+
+    const data = {
+      username: sessionStorage.getItem('username'),
+      newStatus: profile.status,
+    };
+
+    try {
+      const response = await fetch('/changeStatus', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      console.log(result)
+
+      // if (response.ok) {
+      //   setStatusMessage('Status changed successfully');
+      // } else {
+      //   setStatusMessage(`Error: ${result.message}`);
+      // }
+    } catch (error) {
+      // setStatusMessage('Error: Could not update status');
+      console.error('Error:', error);
+    }
+
+
+
+
     console.log(profile.status);
   };
 
@@ -93,9 +148,33 @@ const ProfilePage = () => {
             label="Bio" 
             value={profile?.bio || 'Loading...'} 
           />
+          {gcalLinked && (
+            <div>
+            <InfoField label="Calendar" value={"Google Calendar is Linked!"} />
 
-          <InfoField label="Google Calendar" value={profile?.status || 'Loading...'} />
+            <Link to="/AddEvent">
+              <button>
+                  Create an Event!
+              </button>
+            </Link>
+          </div>
+          )}
+          {!gcalLinked && (
+            <div>
+            <InfoField label="Calendar" value={"Google Calendar is not Linked"} />
+          </div>
+          )}
         </div>
+
+        
+
+      
+{/* 
+        {!gcalLinked && (
+          <div className="button-container">
+            Gcal is not Linked
+          </div>
+        )} */}
 
         <div className="button-container">
           
