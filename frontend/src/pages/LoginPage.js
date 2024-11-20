@@ -66,23 +66,26 @@ function LoginPage() {
     }
   };
 
+
+  
   return (
-    <div>
-      <Alert
+            <Alert
         show={showAlert}
         type={alertType}
         message={alertMessage}
         onClose={() => setShowAlert(false)}
       />
-    
-    <div className="container">
-
+    <div className="fullbox">
+      <div className="infobox">
       <h1>Welcome to LeisureLink!</h1>
-      <h2>Please Log In</h2>
-      
+      <p>LeisureLink is a social networking platform that allows users to expand their group of friends by finding those with similar interests. It will provide a seamless way to find optimal times to schedule events or gatherings within a group. All the features will be available and easily accessible from our website.</p>
+      <h2>By Daniel Wu, Nick Pham,<br></br> Srikar Puri, and Lucas Eng</h2>
+      </div>
+      <div className="signinbox">
+
       <form onSubmit={handleSubmit} className="form" onKeyPress={handleKeyPress}>
-        <div className="input-container">
-          <label className="label" style={{marginRight: 10}}>Username:</label>
+
+          <label className="label">Username:</label>
           <input
             type="text"
             value={username}
@@ -90,9 +93,9 @@ function LoginPage() {
             required
             className="input"
           />
-        </div>
-        <div className="input-container">
-          <label className="label" style={{marginRight: 14}}>Password:</label>
+
+
+          <label className="label">Password:</label>
           <input
             type="password"
             value={password}
@@ -100,21 +103,22 @@ function LoginPage() {
             required
             className="input"
           />
-        </div>
+
         
 
         <Link to="/SignupPage">
           <button className="button" >Or Sign up today!</button>
         </Link>
-        <button type="submit" className="button" style={{marginLeft:'10px'}}>Log In</button>
+        <button type="submit" className="button">Log In</button>
 
       </form>
 
       {/* <HelloWorld  names={namesArray} /> */}
       {message && <p>{message}</p>}
-    </div>
+      </div>
     </div>
   );
 }
+
 
 export default LoginPage;
