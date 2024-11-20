@@ -66,15 +66,15 @@ function LoginPage() {
     }
   };
 
-
+  <Alert
+  show={showAlert}
+  type={alertType}
+  message={alertMessage}
+  onClose={() => setShowAlert(false)}
+/>
   
   return (
-            <Alert
-        show={showAlert}
-        type={alertType}
-        message={alertMessage}
-        onClose={() => setShowAlert(false)}
-      />
+
     <div className="fullbox">
       <div className="infobox">
       <h1>Welcome to LeisureLink!</h1>
