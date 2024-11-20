@@ -24,18 +24,25 @@ function EditProfile() {
   const [alertType, setAlertType] = useState('success');
   const [alertMessage, setAlertMessage] = useState('');
 
-  // Fetch user data on component mount
   useEffect(() => {
     async function fetchUserData() {
       try {
-        // Replace `username` with the actual username (hardcoded here for example)
-        const username = 'testuser';
+        // Retrieve the username from session storage
+        const username = sessionStorage.getItem('username');
+  
+        if (!username) {
+          console.error('No username found in session storage');
+          return;
+        }
+  
+        // Use the username in the API call
         const response = await axios.get(`http://localhost:5000/getProfile?username=${username}`);
-        
         if (response.data.success) {
           const profile = response.data.profile;
+  
+          // Set the retrieved profile data in the state
           setUserData({
-            password: '******', // This is static, not fetched
+            password: '******', // Password remains static
             email: profile.email,
             bio: profile.bio,
             displayName: profile.display_name,
@@ -48,8 +55,10 @@ function EditProfile() {
         console.error('Error fetching user data:', error);
       }
     }
+  
     fetchUserData();
   }, []);
+  
 
   // Handle input changes for updated data
   const handleChange = (e) => {
