@@ -6,6 +6,8 @@ const Alert = ({ show, message, type = 'success', duration = 10000, onClose }) =
 
   useEffect(() => {
     setIsVisible(show);
+    
+    
     if (show) {
       const timer = setTimeout(() => {
         setIsVisible(false);

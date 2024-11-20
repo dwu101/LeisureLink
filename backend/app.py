@@ -44,8 +44,9 @@ class User(db.Model):
     status=db.Column(db.String(40))
     groups=db.Column(db.ARRAY(db.Integer))
     pfp_link=db.Column(db.String(100))
+    friends = db.Column(db.ARRAY(db.Integer))
 
-    def __init__(self,username,password,email,bio,display_name,status,groups,pfp_link):
+    def __init__(self,username,password,email,bio,display_name,status,groups,pfp_link,friends):
         self.username=username
         self.password=password
         self.email=email
@@ -54,31 +55,30 @@ class User(db.Model):
         self.status=status
         self.groups=groups
         self.pfp_link=pfp_link
+        self.friends = friends if friends is not None else []
 
 class UserGCAL(db.Model):
     __tablename__='UserGCal'
     account_id=db.Column(db.Integer, ForeignKey(User.account_id),primary_key=True)
-    username=db.Column(db.String(40), unique=True, nullable=False)
-    client_id=db.Column(db.String(40), nullable=False)
-    project_id=db.Column(db.String(40), nullable=False)
-    auth_uri=db.Column(db.String(500), nullable=False)
+    username=db.Column(db.String(400), unique=True, nullable=False)
+    token=db.Column(db.String(400), nullable=False)
+    refresh_token=db.Column(db.String(400), nullable=False)
     token_uri=db.Column(db.String(500), nullable=False)
-    auth_provider_x509_cert_url=db.Column(db.String(500), nullable=False)
+    client_id=db.Column(db.String(500), nullable=False)
     client_secret=db.Column(db.String(500), nullable=False)
-    redirect_uri=db.Column(db.String(500), nullable=False)
+    scopes=db.Column(db.String(500), nullable=False)
 
     
 
-    def __init__(self, account_id, username, client_id, project_id, auth_uri, token_uri, auth_provider_x509_cert_url, client_secret, redirect_uri):
+    def __init__(self, account_id, username, token, refresh_token, token_uri, client_id, client_secret, scopes):
         self.account_id=account_id
         self.username=username
+        self.token = token
+        self.refresh_token = refresh_token
         self.client_id=client_id
-        self.project_id=project_id
-        self.auth_uri=auth_uri
         self.token_uri=token_uri
-        self.auth_provider_x509_cert_url=auth_provider_x509_cert_url
         self.client_secret=client_secret
-        self.redirect_uri=redirect_uri
+        self.scopes = scopes
 
 
 class Groups(db.Model):
@@ -112,33 +112,34 @@ def create_user(username, password, email):
         db.session.rollback()
         return {"success": False, "message": "Username or email already exists."}
     
-def create_user_GCAL():
-    pass
-    #user_gcal2 = UserGCAL(
-    #     account_id=user2.account_id,  # Use the account_id from user2
-    #     username="jane_smith",
-    #     client_id="client456",
-    #     project_id="project456",
-    #     auth_uri="https://example.com/auth2",
-    #     token_uri="https://example.com/token2",
-    #     auth_provider_x509_cert_url="https://example.com/cert2",
-    #     client_secret="secret456",
-    #     redirect_uri="https://example.com/redirect2"
-    # )
-    # curr = cookies[session['state']]
-    # try:
-    #     if 'state' not in session:
-    #         return jsonify({'error': 'Not authenticated'}), 401
+def create_user_GCAL(username, token, refresh_token, token_uri, client_id, client_secret, scopes):
+    account_id = get_user_by_username(username).account_id
+    print("AAAAAAAAAAAA")
+    print(account_id)
+    user_to_delete = UserGCAL.query.filter_by(username=username).first()
 
-    #     # Get credentials from session
-    #     credentials = Credentials(
-    #         token=curr['token'],
-    #         refresh_token=curr['refresh_token'],
-    #         token_uri=curr['token_uri'],
-    #         client_id=curr['client_id'],
-    #         client_secret=curr['client_secret'],
-    #         scopes=curr['scopes']
-    #     )
+    if user_to_delete:
+        db.session.delete(user_to_delete)  # Mark the row for deletion
+        db.session.commit()
+    
+    print("BBBBBBBBBBB")
+    insert = UserGCAL(
+        account_id=account_id,  # Use the account_id from user2
+        username=username,
+        token=token,
+        refresh_token=refresh_token,
+        token_uri=token_uri,
+        client_id=client_id,
+        client_secret=client_secret,
+        scopes=scopes
+        
+    )
+    print("CCCCCCCCCCCCc")
+    db.session.add(insert)
+    db.session.commit()
+    print("DDDDDDD")
+
+
 
 def get_email(username):
     user = get_user_by_username(username)
@@ -163,6 +164,36 @@ def get_groups(username):
 def get_pfp_link(username):
     user = get_user_by_username(username)
     return user.pfp_link if user else None
+
+def add_friend(current_user, friend_username):
+    current_user_obj = get_user_by_username(current_user)
+    friend_user_obj = get_user_by_username(friend_username)
+
+    if not current_user_obj or not friend_user_obj:
+        return {"success": False, "message": "User not found"}
+
+    if friend_user_obj.account_id in current_user_obj.friends:
+        return {"success": False, "message": "Friend already added"}
+
+    current_user_obj.friends.append(friend_user_obj.account_id)
+    db.session.commit()
+    return {"success": True, "message": "Friend added successfully"}
+
+def remove_friend(current_user, friend_username):
+    current_user_obj = get_user_by_username(current_user)
+    friend_user_obj = get_user_by_username(friend_username)
+
+    if not current_user_obj or not friend_user_obj:
+        return {"success": False, "message": "User not found"}
+
+    if friend_user_obj.account_id not in current_user_obj.friends:
+        return {"success": False, "message": "Friend not found in your friends list"}
+
+    current_user_obj.friends.remove(friend_user_obj.account_id)
+    db.session.commit()
+    return {"success": True, "message": "Friend removed successfully"}
+
+
 
 def init_db():
     # Check if the database exists, and create it if not
@@ -440,10 +471,45 @@ def change_pfp():
     db.session.commit()
     return jsonify({"success": True, "message": "Profile picture link changed successfully"})
 
+@app.route('/gcalLinked', methods=['POST'])
+def gcalLinked():
+    data = request.json
+    username = data.get('username')
+    print(username)
+    print(UserGCAL.query.filter_by(username=username).first())
+    print(UserGCAL.query.filter_by(username=username).first() != None)
+    return jsonify(200,UserGCAL.query.filter_by(username=username).first() != None)
+
+@app.route('/addFriend', methods=['POST'])
+def add_friend_endpoint():
+    data = request.json
+    current_user = data.get('current_user')
+    friend_username = data.get('friend_username')
+
+    if not current_user or not friend_username:
+        return jsonify({"success": False, "message": "Current user and friend username are required"}), 400
+
+    result = add_friend(current_user, friend_username)
+    return jsonify(result)
+
+@app.route('/removeFriend', methods=['POST'])
+def remove_friend_endpoint():
+    data = request.json
+    current_user = data.get('current_user')
+    friend_username = data.get('friend_username')
+
+    if not current_user or not friend_username:
+        return jsonify({"success": False, "message": "Current user and friend username are required"}), 400
+
+    result = remove_friend(current_user, friend_username)
+    return jsonify(result)
+
 
 @app.route('/authorize')
 def authorize():
     state = secrets.token_urlsafe(32)
+    username = request.args.get('username')
+
 
     while state in cookies:
         state = secrets.token_urlsafe(32)
@@ -462,7 +528,7 @@ def authorize():
     )
 
     session['state'] = state
-    cookies[state] = {}
+    cookies[state] = {"username": username}
 
     session.modified=True
     # Instead of redirecting directly, return the URL for the frontend to handle
@@ -486,21 +552,20 @@ def oauth2callback():
 
         credentials = flow.credentials
 
-        cookies[state] = {
-            'token': credentials.token,
-            'refresh_token': credentials.refresh_token,
-            'token_uri': credentials.token_uri,
-            'client_id': credentials.client_id,
-            'client_secret': credentials.client_secret,
-            'scopes': credentials.scopes
-        }
+        cookies[state]["token"] = credentials.token
+        cookies[state]["refresh_token"] = credentials.refresh_token
+        cookies[state]["token_uri"] = credentials.token_uri
+        cookies[state]["client_id"] = credentials.client_id
+        cookies[state]["client_secret"] = credentials.client_secret
+        cookies[state]["scopes"] = credentials.scopes
+
 
         print("Session after storing credentials:", dict(session))
 
         # Instead of redirecting, return a response that sets a cookie and then redirects
         response = jsonify({
             'success': True,
-            'redirect_url': 'http://localhost:3000/AddEvent'
+            'redirect_url': 'http://localhost:3000/ProfilePage'
         })
 
         # Ensure the session is saved
@@ -514,7 +579,8 @@ def oauth2callback():
         # Redirect after ensuring cookies are set
 
                                                                                                 #INSERT FUNCTION TO ADD GCAL DATA INTO DB
-        return redirect('http://localhost:3000/AddEvent')
+        create_user_GCAL(cookies[state]["username"], credentials.token, credentials.refresh_token, credentials.token_uri, credentials.client_id,credentials.client_secret,credentials.scopes)
+        return redirect('http://localhost:3000/ProfilePage')
 
     except Exception as e:
         print(f"OAuth callback error: {str(e)}")
@@ -757,29 +823,29 @@ def insert_dummy_data():
     db.session.commit()
 
     # Use the generated account_ids for UserGCAL
-    user_gcal1 = UserGCAL(
-        account_id=user1.account_id,  # Use the account_id from user1
-        username="john_doe",
-        client_id="client123",
-        project_id="project123",
-        auth_uri="https://example.com/auth",
-        token_uri="https://example.com/token",
-        auth_provider_x509_cert_url="https://example.com/cert",
-        client_secret="secret123",
-        redirect_uri="https://example.com/redirect"
-    )
+    # user_gcal1 = UserGCAL(
+    #     account_id=user1.account_id,  # Use the account_id from user1
+    #     username="john_doe",
+    #     client_id="client123",
+    #     project_id="project123",
+    #     auth_uri="https://example.com/auth",
+    #     token_uri="https://example.com/token",
+    #     auth_provider_x509_cert_url="https://example.com/cert",
+    #     client_secret="secret123",
+    #     redirect_uri="https://example.com/redirect"
+    # )
 
-    user_gcal2 = UserGCAL(
-        account_id=user2.account_id,  # Use the account_id from user2
-        username="jane_smith",
-        client_id="client456",
-        project_id="project456",
-        auth_uri="https://example.com/auth2",
-        token_uri="https://example.com/token2",
-        auth_provider_x509_cert_url="https://example.com/cert2",
-        client_secret="secret456",
-        redirect_uri="https://example.com/redirect2"
-    )
+    # user_gcal2 = UserGCAL(
+    #     account_id=user2.account_id,  # Use the account_id from user2
+    #     username="jane_smith",
+    #     client_id="client456",
+    #     project_id="project456",
+    #     auth_uri="https://example.com/auth2",
+    #     token_uri="https://example.com/token2",
+    #     auth_provider_x509_cert_url="https://example.com/cert2",
+    #     client_secret="secret456",
+    #     redirect_uri="https://example.com/redirect2"
+    # )
 
     # Insert dummy data into the Groups table
     group1 = Groups(
@@ -795,13 +861,12 @@ def insert_dummy_data():
     )
 
     # Add and commit all the dummy data to the database
-    db.session.add(user_gcal1)
-    print("3")
-    db.session.add(user_gcal2)
+    # db.session.add(user_gcal1)
+    # print("3")
+    # db.session.add(user_gcal2)
     print("4")
     db.session.add(group1)
     print("5")
-    db.session.add(group2)
     print("6")
     db.session.commit()
 

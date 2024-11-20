@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './LoginSignupPage.css';  
 import { Link } from 'react-router-dom';  
-import HelloWorld from '../componenets/HelloWorld';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import Alert from '../componenets/Alert';
 
 
 function LoginPage() {
@@ -12,7 +12,25 @@ function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState(''); // Add this line to define setMessage
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertType, setAlertType] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
 
+  useEffect(() => { 
+    
+    const params = new URLSearchParams(window.location.search);
+
+    // Get and decode values safely
+    const showParam = params.get('show');
+    const typeParam = params.get('type');
+    const messageParam = params.get('message');
+
+    // Set default values if parameters are missing or null
+    setShowAlert(showParam ? decodeURIComponent(showParam) : false);
+    setAlertType(typeParam ? decodeURIComponent(typeParam) : '');  // or your default type
+    setAlertMessage(messageParam ? decodeURIComponent(messageParam) : '');  // or your default message
+
+  }, []);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -48,7 +66,15 @@ function LoginPage() {
     }
   };
 
+
+  
   return (
+            <Alert
+        show={showAlert}
+        type={alertType}
+        message={alertMessage}
+        onClose={() => setShowAlert(false)}
+      />
     <div className="fullbox">
       <div className="infobox">
       <h1>Welcome to LeisureLink!</h1>
@@ -93,5 +119,6 @@ function LoginPage() {
     </div>
   );
 }
+
 
 export default LoginPage;

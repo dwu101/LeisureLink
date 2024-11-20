@@ -7,9 +7,8 @@ import AddEvent from './pages/AddEvent';
 import SearchPage from './pages/SearchPage';
 import ProfilePage from './pages/ProfilePage';
 import EditProfile from './pages/EditProfile';
-//import UserProfile from './pages/UserProfile';
 import ProfilePictureUpload from './pages/ProfilePictureUpload';
-// import ProfilePage from './pages/ProfilePage';
+import Testing from './pages/TESTING';
 
 // Export all routes as an array of Route components
 const routes = [
@@ -19,10 +18,10 @@ const routes = [
   <Route path="/AddEvent" element={<AddEvent />} key="AddEvent" />,
   <Route path="/SearchPage" element={<SearchPage />} key="SearchPage" />,
   <Route path="/ProfilePage" element={<ProfilePage />} key="ProfilePage" />,
-  //<Route path="/UserProfile" element={<UserProfile />} key="UserProfile" />,
   <Route path="/EditProfile" element={<EditProfile />} key="EditProfile" />,
   <Route path="/ProfilePictureUpload" element={<ProfilePictureUpload />} key="ProfilePictureUpload" />,
-  // <Route path="/ProfilePage" element={<ProfilePage />} key="ProfilePage" />,
+  <Route path="/Testing" element={<Testing />} key="Testing" />,
+
 
 ];
 

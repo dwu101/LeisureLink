@@ -1,0 +1,78 @@
+/* .body{
+    width:50px;
+} */
+
+.sidebar-container {
+    position: relative;
+    /* width:0px; */
+  }
+  
+  .hamburger-icon {
+    position: fixed; /* Keep it fixed so it doesn't move with the sidebar */
+    top: 20px; /* Adjust the position to your liking */
+    left: 5px; /* Adjust the position to your liking */
+    width: 30px;
+    height: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    z-index: 2000; /* Higher than the sidebar's z-index */
+}
+
+  
+  .hamburger-icon .line {
+    width: 80%;
+    height: 3px;
+    background: white;
+    transition: all 0.3s ease;
+  }
+  
+  .hamburger-icon.open .line:nth-child(1) {
+    transform: rotate(45deg) translateY(8px);
+  }
+  
+  .hamburger-icon.open .line:nth-child(2) {
+    opacity: 0;
+  }
+  
+  .hamburger-icon.open .line:nth-child(3) {
+    transform: rotate(-45deg) translateY(-8px);
+  }
+  
+  .sidebar {
+    position: fixed;
+    top: 0px;
+    left: -250px;
+    width: 250px;
+    height: 100%;
+    background: #333;
+    color: white;
+    padding: 20px;
+    transition: all 0.3s ease;
+    z-index: 1000;
+  }
+  
+  .sidebar.show {
+    left: 0;
+    
+  }
+  
+  .sidebar ul {
+    list-style: none;
+    padding: 0;
+    
+  }
+  
+  .sidebar ul li {
+    margin: 20px 0;
+    
+  }
+  
+  .sidebar ul li a {
+    color: white;
+    text-decoration: none;
+    font-size: 18px;
+
+  }
+  
