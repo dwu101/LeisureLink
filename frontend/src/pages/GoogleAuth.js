@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import {useEffect } from 'react';
 import axios from 'axios';
 
 axios.defaults.withCredentials = true;
@@ -19,7 +19,7 @@ const GoogleAuth = () => {
     };
 
     initAuth();
-  }, []);
+  });
 
   const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 

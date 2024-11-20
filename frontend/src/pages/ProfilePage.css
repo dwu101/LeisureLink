@@ -11,7 +11,7 @@
 	position: sticky;
 	top: 2rem;
 	height: fit-content;
-	background: white;
+	background: aliceblue;
 	border-radius: 8px;
 	padding: 1.5rem;
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -67,10 +67,11 @@
 	display: flex;
 	flex-direction: column;
 	gap: 2rem;
+	/* background-color: aliceblue; */
   }
   
   .featured-project {
-	background: white;
+	background: aliceblue;
 	border-radius: 8px;
 	padding: 1.5rem;
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -136,6 +137,7 @@
 	.profile-sidebar {
 	  position: static;
 	  margin-bottom: 2rem;
+	  background-color: aliceblue;
 	}
   }
 

@@ -69,7 +69,7 @@
 	cursor: not-allowed;
   }
   
-  button {
+  .button {
 	padding: 0.5rem 1rem;
 	background-color: white;
 	border: 1px solid #e2e8f0;
@@ -78,7 +78,7 @@
 	cursor: pointer;
   }
   
-  button:hover {
+  .button:hover {
 	background-color: #f8fafc;
   }
   

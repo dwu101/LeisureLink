@@ -1,7 +1,6 @@
 import './ProfilePage.css';
 import React, { useState, useEffect} from 'react';
-import { useParams } from 'react-router-dom';
-
+import Sidebar from '../componenets/SideBar';
 
 import { Link } from 'react-router-dom';  
 
@@ -9,13 +8,14 @@ import { Link } from 'react-router-dom';
 
 
 const ProfilePage = () => {
-  const [isButtonClicked, setIsButtonClicked] = useState(false);
-  const [projects, setProjects] = useState([]);
+  
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
-  const [username, setUsername] = useState(sessionStorage.getItem('username'));
   const [gcalLinked, setGcalLinked] = useState(false);
+
+  const username = sessionStorage.getItem('username');
+
   
   useEffect(() => {
 
@@ -65,11 +65,7 @@ const ProfilePage = () => {
   
 
     fetchProfile();
-  }, [gcalLinked]);
-
-  const handleCircleClick = () => {
-    setIsButtonClicked(!isButtonClicked);
-  };
+  }, [gcalLinked, username]);
 
   const handleToggle = async () => {
     if (profile.status === "Active"){
@@ -121,8 +117,10 @@ const ProfilePage = () => {
   }
 
   return (
-      
+    <div>
+        <Sidebar/>
     <div className="profile-container">
+      
 
       <aside className="profile-sidebar relative flex flex-col h-full">
         <div className="profile-image-container">
@@ -207,6 +205,7 @@ const ProfilePage = () => {
         </div>
 
       </main>
+    </div>
     </div>
   );
 };
