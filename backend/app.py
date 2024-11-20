@@ -42,9 +42,9 @@ class User(db.Model):
     bio=db.Column(db.String(1000))
     display_name=db.Column(db.String(40))
     status=db.Column(db.String(40))
-    groups=db.Column(db.ARRAY(db.Integer))
+    groups=db.Column(db.ARRAY(db.String(100)))
     pfp_link=db.Column(db.String(100))
-    friends = db.Column(db.ARRAY(db.Integer))
+    friends = db.Column(db.ARRAY(db.String(100)))
 
     def __init__(self,username,password,email,bio,display_name,status,groups,pfp_link,friends):
         self.username=username
@@ -799,8 +799,9 @@ def insert_dummy_data():
         bio="Just a regular user.",
         display_name="John Doe",
         status="Active",
-        groups=["1", "2"],
-        pfp_link="/profile-pictures/TESTING.jpg"
+        groups=["xxxx", "2"],
+        pfp_link="/profile-pictures/TESTING.jpg",
+        friends= ["jane_smith"]
     )
 
     user2 = User(
@@ -811,7 +812,8 @@ def insert_dummy_data():
         display_name="Jane Smith",
         status="Busy",
         groups=["1"],
-        pfp_link="/profile-pictures/TESTING.jpg"
+        pfp_link="/profile-pictures/TESTING.jpg",
+        friends= ["john_doe"]
     )
 
     # Add users to the session and commit to generate account_ids
