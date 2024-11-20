@@ -66,16 +66,20 @@ function LoginPage() {
     }
   };
 
+
+  
+  return (
+
+    <div className="fullbox">
   <Alert
   show={showAlert}
   type={alertType}
   message={alertMessage}
   onClose={() => setShowAlert(false)}
 />
-  
-  return (
 
-    <div className="fullbox">
+
+
       <div className="infobox">
       <h1>Welcome to LeisureLink!</h1>
       <p>LeisureLink is a social networking platform that allows users to expand their group of friends by finding those with similar interests. It will provide a seamless way to find optimal times to schedule events or gatherings within a group. All the features will be available and easily accessible from our website.</p>
