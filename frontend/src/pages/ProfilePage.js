@@ -1,6 +1,6 @@
 import './ProfilePage.css';
 import React, { useState, useEffect} from 'react';
-import Sidebar from '../componenets/SideBar';
+import Sidebar from '../components/SideBar';
 
 import { Link } from 'react-router-dom';  
 

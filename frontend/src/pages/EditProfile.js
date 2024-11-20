@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './EditProfile.css';
-import Alert from '../componenets/Alert';
+import Alert from '../components/Alert';
 
 function EditProfile() {
   // State for user data, updated data, and alert
   const [userData, setUserData] = useState({
     password: '******',
-    email: 'user@example.com',
-    bio: 'This is my bio.',
-    displayName: 'User123',
+    email: '',
+    bio: '',
+    displayName: '',
+    pfp_link: '',
   });
 
   const [updatedData, setUpdatedData] = useState({
@@ -23,12 +24,26 @@ function EditProfile() {
   const [alertType, setAlertType] = useState('success');
   const [alertMessage, setAlertMessage] = useState('');
 
-  // Fetch user data on component mount (fake endpoint for now)
+  // Fetch user data on component mount
   useEffect(() => {
     async function fetchUserData() {
       try {
-        const response = await axios.get('http://localhost:5000/api/user/getProfile');
-        setUserData(response.data);
+        // Replace `username` with the actual username (hardcoded here for example)
+        const username = 'testuser';
+        const response = await axios.get(`http://localhost:5000/getProfile?username=${username}`);
+        
+        if (response.data.success) {
+          const profile = response.data.profile;
+          setUserData({
+            password: '******', // This is static, not fetched
+            email: profile.email,
+            bio: profile.bio,
+            displayName: profile.display_name,
+            pfp_link: profile.pfp_link,
+          });
+        } else {
+          console.error('Error fetching user profile:', response.data.message);
+        }
       } catch (error) {
         console.error('Error fetching user data:', error);
       }
@@ -80,13 +95,14 @@ function EditProfile() {
     <div className="container">
       <h1>Edit Profile</h1>
       <div className="profile-container">
-        {/* Left side: Current user data (unclickable) */}
+        {/* Left side: Current user data */}
         <div className="current-data">
           <h2>Current Info</h2>
           <div className="info-box"><strong>Password:</strong> ******</div>
           <div className="info-box"><strong>Email:</strong> {userData.email}</div>
           <div className="info-box"><strong>Bio:</strong> {userData.bio}</div>
           <div className="info-box"><strong>Display Name:</strong> {userData.displayName}</div>
+          <div className="info-box"><strong>Profile Picture:</strong> <img src={userData.pfp_link} alt="Profile" className="pfp" /></div>
         </div>
 
         {/* Right side: Editable input boxes */}

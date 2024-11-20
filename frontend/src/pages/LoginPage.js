@@ -3,7 +3,7 @@ import './LoginSignupPage.css';
 import { Link } from 'react-router-dom';  
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import Alert from '../componenets/Alert';
+import Alert from '../components/Alert';
 
 
 function LoginPage() {

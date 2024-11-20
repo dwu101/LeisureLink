@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 // import 'react-image-crop/dist/ReactCrop.css';
-import Alert from '../componenets/Alert';
+import Alert from '../components/Alert';
 
 const ProfilePictureUpload = () => {
   const [selectedFile, setSelectedFile] = useState(null);

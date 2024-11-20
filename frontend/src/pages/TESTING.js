@@ -1,5 +1,5 @@
 import React from 'react';
-import Sidebar from '../componenets/SideBar';
+import Sidebar from '../components/SideBar';
 
 function Testing() {
   
