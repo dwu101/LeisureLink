@@ -44,8 +44,9 @@ class User(db.Model):
     status=db.Column(db.String(40))
     groups=db.Column(db.ARRAY(db.Integer))
     pfp_link=db.Column(db.String(100))
+    friends = db.Column(db.ARRAY(db.Integer))
 
-    def __init__(self,username,password,email,bio,display_name,status,groups,pfp_link):
+    def __init__(self,username,password,email,bio,display_name,status,groups,pfp_link,friends):
         self.username=username
         self.password=password
         self.email=email
@@ -54,6 +55,7 @@ class User(db.Model):
         self.status=status
         self.groups=groups
         self.pfp_link=pfp_link
+        self.friends = friends if friends is not None else []
 
 class UserGCAL(db.Model):
     __tablename__='UserGCal'
@@ -163,6 +165,36 @@ def get_groups(username):
 def get_pfp_link(username):
     user = get_user_by_username(username)
     return user.pfp_link if user else None
+
+def add_friend(current_user, friend_username):
+    current_user_obj = get_user_by_username(current_user)
+    friend_user_obj = get_user_by_username(friend_username)
+
+    if not current_user_obj or not friend_user_obj:
+        return {"success": False, "message": "User not found"}
+
+    if friend_user_obj.account_id in current_user_obj.friends:
+        return {"success": False, "message": "Friend already added"}
+
+    current_user_obj.friends.append(friend_user_obj.account_id)
+    db.session.commit()
+    return {"success": True, "message": "Friend added successfully"}
+
+def remove_friend(current_user, friend_username):
+    current_user_obj = get_user_by_username(current_user)
+    friend_user_obj = get_user_by_username(friend_username)
+
+    if not current_user_obj or not friend_user_obj:
+        return {"success": False, "message": "User not found"}
+
+    if friend_user_obj.account_id not in current_user_obj.friends:
+        return {"success": False, "message": "Friend not found in your friends list"}
+
+    current_user_obj.friends.remove(friend_user_obj.account_id)
+    db.session.commit()
+    return {"success": True, "message": "Friend removed successfully"}
+
+
 
 def init_db():
     # Check if the database exists, and create it if not
@@ -439,6 +471,30 @@ def change_pfp():
     user.pfp_link = new_pfp_link
     db.session.commit()
     return jsonify({"success": True, "message": "Profile picture link changed successfully"})
+
+@app.route('/addFriend', methods=['POST'])
+def add_friend_endpoint():
+    data = request.json
+    current_user = data.get('current_user')
+    friend_username = data.get('friend_username')
+
+    if not current_user or not friend_username:
+        return jsonify({"success": False, "message": "Current user and friend username are required"}), 400
+
+    result = add_friend(current_user, friend_username)
+    return jsonify(result)
+
+@app.route('/removeFriend', methods=['POST'])
+def remove_friend_endpoint():
+    data = request.json
+    current_user = data.get('current_user')
+    friend_username = data.get('friend_username')
+
+    if not current_user or not friend_username:
+        return jsonify({"success": False, "message": "Current user and friend username are required"}), 400
+
+    result = remove_friend(current_user, friend_username)
+    return jsonify(result)
 
 
 @app.route('/authorize')
