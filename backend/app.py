@@ -46,7 +46,8 @@ class User(db.Model):
     pfp_link=db.Column(db.String(100))
     friends = db.Column(db.ARRAY(db.String(100)))
 
-    def __init__(self,username,password,email,bio,display_name,status,groups,pfp_link,friends):
+    def __init__(self,account_id, username,password,email,bio,display_name,status,groups,pfp_link,friends):
+        self.account_id = account_id
         self.username=username
         self.password=password
         self.email=email
@@ -104,25 +105,25 @@ def check_user_credentials(username, password):
 
 def create_user(username, password, email):
     try:
-        new_user = User(username=username, password=password, email=email, bio="", display_name="", status="", groups=[], pfp_link="")
+       
+        new_user = User(account_id=User.query.count()+1, username=username, password=password, email=email, bio="", display_name="", status="", groups=[], pfp_link="", friends= [])
         db.session.add(new_user)
         db.session.commit()
         return {"success": True, "message": "User created successfully."}
-    except Exception:
+    except Exception as e:
         db.session.rollback()
+        print(e)
         return {"success": False, "message": "Username or email already exists."}
     
 def create_user_GCAL(username, token, refresh_token, token_uri, client_id, client_secret, scopes):
     account_id = get_user_by_username(username).account_id
-    print("AAAAAAAAAAAA")
-    print(account_id)
+
     user_to_delete = UserGCAL.query.filter_by(username=username).first()
 
     if user_to_delete:
         db.session.delete(user_to_delete)  # Mark the row for deletion
         db.session.commit()
     
-    print("BBBBBBBBBBB")
     insert = UserGCAL(
         account_id=account_id,  # Use the account_id from user2
         username=username,
@@ -134,10 +135,8 @@ def create_user_GCAL(username, token, refresh_token, token_uri, client_id, clien
         scopes=scopes
         
     )
-    print("CCCCCCCCCCCCc")
     db.session.add(insert)
     db.session.commit()
-    print("DDDDDDD")
 
 
 
@@ -147,23 +146,23 @@ def get_email(username):
 
 def get_bio(username):
     user = get_user_by_username(username)
-    return user.bio if user else None
+    return user.bio if user else "None"
 
 def get_display_name(username):
     user = get_user_by_username(username)
-    return user.display_name if user else None
+    return user.display_name if user else "None"
 
 def get_status(username):
     user = get_user_by_username(username)
-    return user.status if user else None
+    return user.status if user else "Active"
 
 def get_groups(username):
     user = get_user_by_username(username)
-    return user.groups if user else None
+    return user.groups if user else "None"
 
 def get_pfp_link(username):
     user = get_user_by_username(username)
-    return user.pfp_link if user else None
+    return user.pfp_link if user else "/profile-pictures/defaultpfp.png"
 
 def add_friend(current_user, friend_username):
     current_user_obj = get_user_by_username(current_user)
@@ -243,13 +242,13 @@ def login():
     data = request.json
     username = data.get('username')
     password = data.get('password')
-    print(username)
-    print(password)
+    # print(username)
+    # print(password)
     if check_user_credentials(username, password):
-        print("A")
+        # print("A")
         return jsonify({"status": 200, "message": "success"})
     else:
-        print("B")
+        # print("B")
         return jsonify({"status": 401, "message": "Invalid credentials"})
 
 @app.route('/signUp', methods=['POST'])
@@ -258,13 +257,22 @@ def sign_up():
     username = data.get('username')
     password = data.get('password')
     email = data.get('email')
-    result = create_user(username, password, email)
-    return jsonify(result)
+    # print(username, password, email)
+    if username and password and email:
+        result = create_user(username, password, email)
+        # print("IN SIGN UP")
+        # print("username",(username))
+        # print("email",get_email(username))
+        return jsonify(result)
+    else:
+        return jsonify({"status": 401, "message": "Incomplete Info"})
+
+
 
 @app.route('/getProfile', methods=['GET'])
 def get_profile():
     username = request.args.get('username')
-    print(username)
+    # print(username)
     if not username:
         return jsonify({"success": False, "message": "Username is required"}), 400
     
@@ -276,7 +284,7 @@ def get_profile():
         "groups": get_groups(username),
         "pfp_link": get_pfp_link(username)
     }
-    
+    # print(profile)
     if all(value is not None for value in profile.values()):
         return jsonify({"success": True, "profile": profile})
     else:
@@ -388,6 +396,7 @@ def change_email():
     username = data.get('username')
     new_email = data.get('newEmail')
 
+    # print(data)
     if not username or not new_email:
         return jsonify({"success": False, "message": "Username and new email are required"}), 400
 
@@ -459,12 +468,16 @@ def change_pfp():
     data = request.json
     username = data.get('username')
     new_pfp_link = data.get('newPFPLink')
+    # print(data)
+    # print(username, new_pfp_link)
+
 
     if not username or not new_pfp_link:
         return jsonify({"success": False, "message": "Username and new profile picture link are required"}), 400
 
     user = get_user_by_username(username)
     if not user:
+        print("RAHHHH USER NOT FOUND")
         return jsonify({"success": False, "message": "User not found"}), 404
 
     user.pfp_link = new_pfp_link
@@ -475,9 +488,9 @@ def change_pfp():
 def gcalLinked():
     data = request.json
     username = data.get('username')
-    print(username)
-    print(UserGCAL.query.filter_by(username=username).first())
-    print(UserGCAL.query.filter_by(username=username).first() != None)
+    # print(username)
+    # print(UserGCAL.query.filter_by(username=username).first())
+    # print(UserGCAL.query.filter_by(username=username).first() != None)
     return jsonify(200,UserGCAL.query.filter_by(username=username).first() != None)
 
 @app.route('/addFriend', methods=['POST'])
@@ -695,6 +708,8 @@ def upload_file():
         return jsonify({'error': 'No file part'}), 400
     
     file = request.files['file']
+    # username = request.files['username']
+    # # change_pfp()
     
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 401
@@ -722,77 +737,11 @@ def upload_file():
     
     return jsonify({'error': 'File type not allowed'}), 404
 
-# @app.route('/search', methods=['POST', 'OPTIONS'])
-# def search():
-#     try:
-#         data = request.get_json()
-#         type = data['searchType']
-#         item = data['query']
-
-#         if type == "username": 
-#             ret = [
-#                 {
-#                     "displayName": "John Doe",
-#                     "username": "john123"
-#                 },
-#                 {
-#                     "displayName": "Jone Smith",
-#                     "username": "jone456"
-#                 }
-#             ]
-#         elif type == "displayName":
-#             ret = [
-#                 {
-#                     "displayName": "John Doe",
-#                     "username": "john123"
-#                 },
-#                 {
-#                     "displayName": "John Smith",
-#                     "username": "jsmith456"
-#                 },
-#                 {
-#                     "displayName": "John Wilson",
-#                     "username": "jwilson789"
-#                 },
-#                 {
-#                     "displayName": "John Brown",
-#                     "username": "jbrown101"
-#                 },
-#                 {
-#                     "displayName": "John Miller",
-#                     "username": "jmiller202"
-#                 }
-#             ]
-            
-#         elif type == "group":
-#             ret = [
-#                     {
-#                         "displayName": "Sarah Johnson",
-#                         "username": "sjohnson123"
-#                     },
-#                     {
-#                         "displayName": "Michael Chen",
-#                         "username": "mchen456"
-#                     },
-#                     {
-#                         "displayName": "Emma Rodriguez",
-#                         "username": "erodriguez789"
-#                     }
-#                 ]
-            
-            
-#         else:
-#             return "Input Valid Search Type", 404 
-        
-
-#         return jsonify(ret)
-
-#     except Exception as e:
-#         return f"Error: {e}", 404
 
 def insert_dummy_data():
     # Insert dummy data into the User table
     user1 = User(
+        account_id= 1,
         username="john_doe",
         password="password123",
         email="john@example.com",
@@ -805,6 +754,7 @@ def insert_dummy_data():
     )
 
     user2 = User(
+        account_id=2,
         username="jane_smith",
         password="mypassword",
         email="jane@example.com",

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './LoginSignupPage.css';  
+import './HomePage.css';  
 import { Link } from 'react-router-dom';  
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -15,17 +15,25 @@ function LoginPage() {
   const [showAlert, setShowAlert] = useState(false);
   const [alertType, setAlertType] = useState('');
   const [alertMessage, setAlertMessage] = useState('');
+  const [signingUp, setSigningUp] = useState(false);
+  const [password2, setPassword2] = useState('');
+  const [email, setEmail] = useState('');
+
+
+
 
   useEffect(() => { 
     
     const params = new URLSearchParams(window.location.search);
 
-    // Get and decode values safely
     const showParam = params.get('show');
     const typeParam = params.get('type');
     const messageParam = params.get('message');
+    console.log(showParam)
+    console.log(typeParam)
+    console.log(messageParam)
 
-    // Set default values if parameters are missing or null
+
     setShowAlert(showParam ? decodeURIComponent(showParam) : false);
     setAlertType(typeParam ? decodeURIComponent(typeParam) : '');  // or your default type
     setAlertMessage(messageParam ? decodeURIComponent(messageParam) : '');  // or your default message
@@ -34,7 +42,8 @@ function LoginPage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    //INSERT API CALL HERE
+
+    if (!signingUp){
       try {
         const response = await axios.post('/login', {
           username,
@@ -55,6 +64,40 @@ function LoginPage() {
         // Handle errors (e.g., incorrect credentials)
         setMessage(error.response?.data?.error || "Login failed. Please try again.");
       }
+    }
+    else{
+      if (password === password2){
+        console.log(email)
+        console.log(username)
+        console.log(password)
+        try {
+          const formData = new FormData();
+          formData.append('email', email);
+          formData.append('username', username);
+          formData.append('password', password);
+        
+          const response = await axios.post('/signUp', formData, {
+            headers: {
+              'Content-Type': 'application/json'  // Specify content type for form data
+            }
+          });
+          
+          setMessage(response.data.message);
+          sessionStorage.setItem('username', username);
+          if (response.ok){
+            navigate("/ProfilePage");
+          }
+        } catch (error) {
+          setMessage(error.response?.data?.error || "Signup failed. Please try again.");
+        }
+
+      } else{
+        setShowAlert(true);
+        setAlertType('error');
+        setAlertMessage('Passwords do not match')
+
+      }
+    }
 
 
 
@@ -83,7 +126,7 @@ function LoginPage() {
       <div className="infobox">
       <h1>Welcome to LeisureLink!</h1>
       <p>LeisureLink is a social networking platform that allows users to expand their group of friends by finding those with similar interests. It will provide a seamless way to find optimal times to schedule events or gatherings within a group. All the features will be available and easily accessible from our website.</p>
-      <h2>By Daniel Wu, Nick Pham,<br></br> Srikar Puri, and Lucas Eng</h2>
+      <p>By: Daniel Wu, Nick Pham,<br></br> Srikar Puri, and Lucas Eng</p>
       </div>
       <div className="signinbox">
 
@@ -110,10 +153,35 @@ function LoginPage() {
 
         
 
-        <Link to="/SignupPage">
-          <button className="button" >Or Sign up today!</button>
-        </Link>
-        <button type="submit" className="button">Log In</button>
+        {/* <Link to="/SignupPage"> */}
+        {!signingUp && (
+          <>
+          <button className="button" onClick={() => setSigningUp(true)}>Or Sign up today!</button>
+          <button type="submit" className="button">Login</button>
+          </>
+        )}
+        {signingUp && (
+          <>
+          <label className="label">Confirm Password:</label>
+          <input
+            type="password"
+            value={password2}
+            onChange={(e) => setPassword2(e.target.value)}
+            required
+            className="input"
+          />
+          <label className="label">Email:</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="input"
+          />
+          <button className="button" onClick={() => setSigningUp(false)}>Log in Instead!</button>
+          <button type="submit" className="button">Sign Up</button>
+          </>
+        )}
 
       </form>
 

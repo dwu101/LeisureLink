@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './EditProfile.css';
+import './ProfilePage.css'
 import Alert from '../components/Alert';
+import Sidebar from '../components/SideBar';
+import { Link } from 'react-router-dom';
+import { centerCrop } from 'react-image-crop';
+import ProfilePictureUpload from '../components/ProfilePictureUpload';
 
 function EditProfile() {
-  // State for user data, updated data, and alert
+  const [profile, setProfile] = useState(null);
+
   const [userData, setUserData] = useState({
     password: '******',
     email: '',
@@ -15,49 +21,41 @@ function EditProfile() {
 
   const [updatedData, setUpdatedData] = useState({
     newPassword: '',
+    newPassword2: '',
     newEmail: '',
     newBio: '',
     newDisplayName: '',
   });
+
+  const username = sessionStorage.getItem('username');
+
 
   const [showAlert, setShowAlert] = useState(false);
   const [alertType, setAlertType] = useState('success');
   const [alertMessage, setAlertMessage] = useState('');
 
   useEffect(() => {
-    async function fetchUserData() {
+    const fetchProfile = async () => {
+      console.log(sessionStorage.getItem('username'));
+  
       try {
-        // Retrieve the username from session storage
-        const username = sessionStorage.getItem('username');
+        const response = await fetch(`/getProfile?username=${username}`);
+        const result = await response.json();
   
-        if (!username) {
-          console.error('No username found in session storage');
-          return;
-        }
-  
-        // Use the username in the API call
-        const response = await axios.get(`http://localhost:5000/getProfile?username=${username}`);
-        if (response.data.success) {
-          const profile = response.data.profile;
-  
-          // Set the retrieved profile data in the state
-          setUserData({
-            password: '******', // Password remains static
-            email: profile.email,
-            bio: profile.bio,
-            displayName: profile.display_name,
-            pfp_link: profile.pfp_link,
-          });
+        if (result.success) {
+          setProfile(result.profile);
         } else {
-          console.error('Error fetching user profile:', response.data.message);
+          // setError(result.message || 'Failed to fetch profile');
         }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
+      } catch (err) {
+        // setError('Error connecting to server');
+      } finally {
+        // setLoading(false);
       }
-    }
+    };
   
-    fetchUserData();
-  }, []);
+    fetchProfile();
+  }, [username]);
   
 
   // Handle input changes for updated data
@@ -71,51 +69,112 @@ function EditProfile() {
     e.preventDefault();
     let messages = [];
 
-    try {
-      if (updatedData.newPassword) {
-        await axios.post('http://localhost:5000/api/user/changePassword', { password: updatedData.newPassword });
-        messages.push('Successfully changed Password!');
-      }
-      if (updatedData.newEmail) {
-        await axios.post('http://localhost:5000/api/user/changeEmail', { email: updatedData.newEmail });
-        messages.push('Successfully updated Email!');
-      }
-      if (updatedData.newBio) {
-        await axios.post('http://localhost:5000/api/user/changeBio', { bio: updatedData.newBio });
-        messages.push('Successfully updated Bio!');
-      }
-      if (updatedData.newDisplayName) {
-        await axios.post('http://localhost:5000/api/user/changeDisplayName', { displayName: updatedData.newDisplayName });
-        messages.push('Successfully updated Display Name!');
+    if (updatedData.newPassword === updatedData.newPassword2){
+
+      try {
+        if (updatedData.newPassword) {
+          await axios.post('/changePassword', { newPassword: updatedData.newPassword, username: username});
+          if (messages.length){
+            messages.push(", Password")
+          }
+          else{
+          messages.push('Successfully changed Password');
+          }
+        }
+        if (updatedData.newEmail) {
+          await axios.post('/changeEmail', { newEmail: updatedData.newEmail , username: username});
+          if (messages.length){
+            messages.push(", Email")
+          }
+          else{
+          messages.push('Successfully changed Email');
+          }
+        }
+        if (updatedData.newBio) {
+          await axios.post('/changeBio', { newBio: updatedData.newBio , username: username });
+          if (messages.length){
+            messages.push(", Bio")
+          }
+          else{
+          messages.push('Successfully changed Bio');
+          }
+        }
+        if (updatedData.newDisplayName) {
+          await axios.post('/changeDisplayName', { newDisplayName: updatedData.newDisplayName , username: username });
+          if (messages.length){
+            messages.push(", Name")
+          }
+          else{
+          messages.push('Successfully changed Name');
+          }
+        }
+        
+        setAlertType('success');
+        messages.push(". Reload to see changes.")
+        setAlertMessage(messages.join(' '));
+        // window.location.reload();
+        setUpdatedData({
+          newPassword: '',
+          newPassword2: '',
+          newEmail: '',
+          newBio: '',
+          newDisplayName: '',
+        })
+      } catch (error) {
+        console.error('Error updating profile:', error);
+        setAlertType('error');
+        setAlertMessage('Failed to update profile. Please try again.');
       }
 
-      setAlertType('success');
-      setAlertMessage(messages.join(' '));
-    } catch (error) {
-      console.error('Error updating profile:', error);
+      setShowAlert(true);
+    } else{
+      setShowAlert(true);
       setAlertType('error');
-      setAlertMessage('Failed to update profile. Please try again.');
-    }
-
-    setShowAlert(true);
-  };
+      setAlertMessage('Passwords do not match');
+    };
+  }
+  
 
   return (
     <div className="container">
-      <h1>Edit Profile</h1>
+      <h1 style={{textAlign: "center"}}>Edit Profile</h1>
       <div className="profile-container">
-        {/* Left side: Current user data */}
-        <div className="current-data">
-          <h2>Current Info</h2>
-          <div className="info-box"><strong>Password:</strong> ******</div>
-          <div className="info-box"><strong>Email:</strong> {userData.email}</div>
-          <div className="info-box"><strong>Bio:</strong> {userData.bio}</div>
-          <div className="info-box"><strong>Display Name:</strong> {userData.displayName}</div>
-          <div className="info-box"><strong>Profile Picture:</strong> <img src={userData.pfp_link} alt="Profile" className="pfp" /></div>
-        </div>
 
-        {/* Right side: Editable input boxes */}
-        <div className="update-data">
+      <div>
+        <Sidebar />
+    <div className="profile-container">
+      
+
+      <aside className="profile-sidebar relative flex flex-col h-full">
+        <div className="profile-image-container">
+          <img 
+            src={profile?.pfp_link || "/profile-pictures/defaultpfp.png"} 
+            alt="Profile" 
+            className="profile-image" 
+          />
+        </div>
+        
+        <div className="profile-info flex-grow">
+          <InfoField label="Name" value={profile?.display_name || 'None'} />
+          <InfoField label="Username" value={username} />
+          <InfoField label="Email" value={profile?.email || 'Loading...'} />
+          <InfoField label="Status" value={profile?.status || 'None'} />
+          
+      
+
+          <InfoField 
+            label="Bio" 
+            value={profile?.bio || 'None'} 
+          />
+        
+        </div>
+      </aside>
+
+      </div>
+      </div>
+
+        
+        <div className="update-data" style={{marginLeft:"50px"}}>
           <h2>Update Info</h2>
           <form onSubmit={handleSubmit}>
             <div className="input-container">
@@ -126,6 +185,18 @@ function EditProfile() {
                 value={updatedData.newPassword}
                 onChange={handleChange}
                 className="input"
+                style={{marginLeft:"20px"}}
+              />
+            </div>
+            <div className="input-container">
+              <label>Confirm New Password:</label>
+              <input
+                type="password"
+                name="newPassword2"
+                value={updatedData.newPassword2}
+                onChange={handleChange}
+                className="input"
+                style={{marginLeft:"2px"}}
               />
             </div>
             <div className="input-container">
@@ -136,6 +207,7 @@ function EditProfile() {
                 value={updatedData.newEmail}
                 onChange={handleChange}
                 className="input"
+                style={{marginLeft:"20px"}}
               />
             </div>
             <div className="input-container">
@@ -146,20 +218,28 @@ function EditProfile() {
                 value={updatedData.newBio}
                 onChange={handleChange}
                 className="input"
+                style={{marginLeft:"20px"}}
               />
             </div>
             <div className="input-container">
-              <label>New Display Name:</label>
+              <label>New Name:</label>
               <input
                 type="text"
                 name="newDisplayName"
                 value={updatedData.newDisplayName}
                 onChange={handleChange}
                 className="input"
+                style={{marginLeft:"20px"}}
               />
             </div>
-            <button type="submit" className="button">Save Changes</button>
+            <div >
+              <ProfilePictureUpload/>
+            </div>
+            
+            <button style={{marginTop: "50px"}} type="submit" className="button">Save Changes</button>
           </form>
+
+          
         </div>
       </div>
 
@@ -174,4 +254,10 @@ function EditProfile() {
   );
 }
 
+const InfoField = ({ label, value }) => (
+  <div className="info-field">
+    <label>{label}</label>
+    <p>{value}</p>
+  </div>
+);
 export default EditProfile;

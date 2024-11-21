@@ -13,6 +13,9 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
   const [gcalLinked, setGcalLinked] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+
 
   const username = sessionStorage.getItem('username');
 
@@ -20,6 +23,7 @@ const ProfilePage = () => {
   useEffect(() => {
 
     const fetchProfile = async () => {
+      console.log("BBB")
       console.log(sessionStorage.getItem('username'))
 
       try {
@@ -31,6 +35,7 @@ const ProfilePage = () => {
         } else {
           setError(result.message || 'Failed to fetch profile');
         }
+
       } catch (err) {
         setError('Error connecting to server');
       } finally {
@@ -47,8 +52,8 @@ const ProfilePage = () => {
         });
       
         const resultLink = await responseLink.json();
-        console.log("AAAA");
-        console.log(resultLink);
+        // console.log("AAAA");
+        // console.log(resultLink);
       
         if (resultLink[1] === true) {
           setGcalLinked(true);
@@ -118,24 +123,24 @@ const ProfilePage = () => {
 
   return (
     <div>
-        <Sidebar/>
+        <Sidebar isOpen={isOpen} setIsOpen={setIsOpen}/>
     <div className="profile-container">
       
 
       <aside className="profile-sidebar relative flex flex-col h-full">
         <div className="profile-image-container">
           <img 
-            src={profile?.pfp_link} 
+            src={profile?.pfp_link || "/profile-pictures/defaultpfp.png"} 
             alt="Profile" 
             className="profile-image" 
           />
         </div>
         
         <div className="profile-info flex-grow">
-          <InfoField label="Name" value={profile?.display_name || 'Loading...'} />
+          <InfoField label="Name" value={profile?.display_name || 'None'} />
           <InfoField label="Username" value={username} />
           <InfoField label="Email" value={profile?.email || 'Loading...'} />
-          <InfoField label="Status" value={profile?.status || 'Loading...'} />
+          <InfoField label="Status" value={profile?.status || 'Active'} />
           
           <button
             status={profile.status}
@@ -144,7 +149,7 @@ const ProfilePage = () => {
 
           <InfoField 
             label="Bio" 
-            value={profile?.bio || 'Loading...'} 
+            value={profile?.bio || 'None...'} 
           />
           {gcalLinked && (
             <div>
@@ -183,9 +188,9 @@ const ProfilePage = () => {
 
         <div className="button-container">
           
-          <Link to="/EditProfile">
-          <button style={{marginTop:"50px", fontSize: "20px"}}>Edit Profile</button>
-          </Link>
+          {/* <Link to="/EditProfile"> */}
+          <button onClick= {() => setIsOpen(!isOpen)} style={{marginTop:"50px", fontSize: "20px"}}>All Actions!</button>
+          {/* </Link> */}
         </div>
       </aside>
 
@@ -193,14 +198,17 @@ const ProfilePage = () => {
         <div className="featured-project">
           <h2>Groups</h2>
           <div className="groups-list">
-            {profile?.groups?.map((group, index) => {
-              return (
+          {profile?.groups?.length > 0 ? (
+              profile.groups.map((group, index) => (
                 <div key={index} className="group-item">
                   <h3>{group}</h3>
-                  {/* <p>{group.content}</p> */}
                 </div>
-              );
-            })}
+              ))
+            ) : (
+              <div >
+                <p>None</p>
+              </div>
+            )}
           </div>
         </div>
 

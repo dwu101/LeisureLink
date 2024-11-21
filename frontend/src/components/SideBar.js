@@ -3,8 +3,13 @@ import { Link } from 'react-router-dom';
 import './Sidebar.css';
 import Alert from './Alert';
 
-const Sidebar = () => {
-  const [isOpen, setIsOpen] = useState(false);
+const Sidebar = ({isOpen: propIsOpen, setIsOpen: propSetIsOpen}) => {
+  // const [isOpen, setIsOpen] = useState(false);
+
+  const [internalIsOpen, internalSetIsOpen] = useState(false);
+  const isOpen = propIsOpen !== undefined ? propIsOpen : internalIsOpen;
+  const setIsOpen = propSetIsOpen !== undefined ? propSetIsOpen : internalSetIsOpen;
+
   const [showAlert, setShowAlert] = useState(false);
   const [alertType, setAlertType] = useState('error');
   const [alertMessage, setAlertMessage] = useState('error');
@@ -32,7 +37,7 @@ const Sidebar = () => {
         else{
             const params = new URLSearchParams({
                 show: true,
-                message: "successful sign out",
+                message: "Signed Out",
                 type: "success" 
             });
             console.log(params)
@@ -79,6 +84,10 @@ const Sidebar = () => {
           </li>
           <li>
             <Link to="/services" onClick={toggleSidebar}>Services</Link>
+          </li>
+
+          <li>
+            <Link to="/SearchPage" onClick={toggleSidebar}>Search</Link>
           </li>
           
           <li style={{marginTop:"50px"} } onClick={logOut}>

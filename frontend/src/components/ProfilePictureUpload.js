@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
-// import 'react-image-crop/dist/ReactCrop.css';
-import Alert from '../components/Alert';
+import 'react-image-crop/dist/ReactCrop.css';
+import Alert from './Alert';
 
 const ProfilePictureUpload = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -14,6 +14,9 @@ const ProfilePictureUpload = () => {
   const [showAlert, setShowAlert] = useState(false);
   const [alertType, setAlertType] = useState('success');
   const [alertMessage, setAlertMessage] = useState('');
+  const [confirmed, setConfirmed] = useState(false);
+
+  const username = sessionStorage.getItem('username');
   
   const imgRef = useRef(null);
 
@@ -23,6 +26,7 @@ const ProfilePictureUpload = () => {
         {
           unit: '%',
           width: 90,
+          height: 90, // Added fixed height
         },
         aspect,
         mediaWidth,
@@ -40,8 +44,6 @@ const ProfilePictureUpload = () => {
       const reader = new FileReader();
       reader.addEventListener('load', () => {
         setImgSrc(reader.result);
-        
-        // Reset crop state when new image is loaded
         setCrop(undefined);
         setCroppedImage(null);
       });
@@ -53,6 +55,8 @@ const ProfilePictureUpload = () => {
     const { width, height } = e.currentTarget;
     const crop = centerAspectCrop(width, height, 1);
     setCrop(crop);
+    // Set completedCrop immediately since we won't allow resizing
+    setCompletedCrop(crop);
   }
 
   const createImage = (url) =>
@@ -62,54 +66,57 @@ const ProfilePictureUpload = () => {
       image.addEventListener('error', (error) => reject(error));
       image.src = url;
     });
-
+  
   const getCroppedImg = async () => {
     try {
       const image = await createImage(imgSrc);
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-
+  
       if (!ctx || !completedCrop) {
         throw new Error('No crop data available');
       }
-
+  
+      // Set canvas size to be a square based on the smallest dimension of the crop
+      const size = Math.min(completedCrop.width, completedCrop.height);
+      canvas.width = size;
+      canvas.height = size;
+  
+      // Calculate scaling factors
       const scaleX = image.naturalWidth / image.width;
       const scaleY = image.naturalHeight / image.height;
-
-      canvas.width = completedCrop.width;
-      canvas.height = completedCrop.height;
-
+  
+      // Clear the canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+      // Create a circular clipping path
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI, true);
+      ctx.closePath();
+      ctx.clip();
+  
+      // Draw the image centered within the circular clip
+      const drawX = (completedCrop.x * scaleX) + (completedCrop.width * scaleX - size) / 2;
+      const drawY = (completedCrop.y * scaleY) + (completedCrop.height * scaleY - size) / 2;
+  
       ctx.drawImage(
         image,
-        completedCrop.x * scaleX,
-        completedCrop.y * scaleY,
-        completedCrop.width * scaleX,
-        completedCrop.height * scaleY,
+        drawX,
+        drawY,
+        size * scaleX,
+        size * scaleY,
         0,
         0,
-        completedCrop.width,
-        completedCrop.height
+        size,
+        size
       );
-
-      // Create circular mask
-      ctx.globalCompositeOperation = 'destination-in';
-      ctx.beginPath();
-      ctx.arc(
-        canvas.width / 2,
-        canvas.height / 2,
-        canvas.width / 2,
-        0,
-        2 * Math.PI,
-        true
-      );
-      ctx.fill();
-
+  
       return new Promise((resolve) => {
         canvas.toBlob((blob) => {
           if (blob) {
             resolve(URL.createObjectURL(blob));
           }
-        }, 'image/jpeg');
+        }, 'image/png', 1); // Using PNG for better quality with transparency
       });
     } catch (error) {
       console.error('Error creating cropped image:', error);
@@ -123,6 +130,7 @@ const ProfilePictureUpload = () => {
       
       const croppedImageUrl = await getCroppedImg();
       setCroppedImage(croppedImageUrl);
+      // handleUpload()
     } catch (error) {
       console.error('Error confirming crop:', error);
     }
@@ -139,8 +147,8 @@ const ProfilePictureUpload = () => {
       const blob = await response.blob();
       
       const formData = new FormData();
-      const timestamp = new Date().getTime();
-      const file = new File([blob], `profile_${timestamp}.jpg`, { type: 'image/jpeg' });
+      // const timestamp = new Date().getTime();
+      const file = new File([blob], `profile_${username}.jpg`, { type: 'image/jpeg' });
       formData.append('file', file);
 
       const uploadResponse = await fetch('/api/upload-profile-picture', {
@@ -149,30 +157,50 @@ const ProfilePictureUpload = () => {
       });
 
       if (!uploadResponse.ok) {
-        setAlertType('error');
-        setAlertMessage('Failed to update profile. Please try again.');
-        setShowAlert(true);
+        
         const errorData = await uploadResponse.json();
         throw new Error(errorData.error || 'Upload failed');
       }
+      setConfirmed(true);
 
       const data = await uploadResponse.json();
       console.log('Upload successful. Image path:', data.imagePath);
-      setAlertType('success');
-      setAlertMessage('Profile updated successfully!');
-      setShowAlert(true);
+
+      // try {
+      console.log("AAA")
+      console.log(username)
+      console.log(data.imagePath)
+      const response2 = await fetch('/changePFP', {  // Replace with your actual endpoint
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: username,
+          newPFPLink: data.imagePath
+        })
+      });
+  
+      if (!response2.ok) {
+        throw new Error(`HTTP error! status: ${response2.status}`);
+      }
+  
+      const data2 = await response2.json();
+      return data2;
+      // } catch (error) {
+        // console.error('Error updating profile picture:', error);
+        // throw error;
+      // }
       
-      // Clear the form
-      setSelectedFile(null);
-      setImgSrc(null);
-      setCroppedImage(null);
-      setCrop(undefined);
+      
+
+
       
     } catch (error) {
       console.error('Error uploading image:', error);
       setUploadError(error.message || 'Error uploading image');
-      setAlertType('success');
-      setAlertMessage('Profile updated successfully!');
+      setAlertType('error');
+      setAlertMessage('Failed to upload image. Please try again.');
       setShowAlert(true);
     } finally {
       setUploading(false);
@@ -186,20 +214,15 @@ const ProfilePictureUpload = () => {
           <label className="block text-center w-full cursor-pointer">
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 hover:border-gray-400 transition-colors">
               <div className="flex flex-col items-center">
-                {/* <div className="w-12 h-12 text-gray-400 mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div> */}
-                <span className="text-sm text-gray-500">Click to upload profile picture</span>
+                <span className="text-sm text-gray-500">Set/change profile picture</span>
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={onSelectFile}
+                  style={{marginLeft: "30px"}}
+                />
               </div>
-              <input
-                type="file"
-                className="hidden"
-                accept="image/*"
-                onChange={onSelectFile}
-              />
             </div>
           </label>
         </div>
@@ -210,11 +233,24 @@ const ProfilePictureUpload = () => {
           <div className="relative w-full h-96">
             <ReactCrop
               crop={crop}
-              onChange={(_, percentCrop) => setCrop(percentCrop)}
+              onChange={(_, percentCrop) => {
+                // Only update the position, maintain the size
+                setCrop(prev => ({
+                  ...prev,
+                  x: percentCrop.x,
+                  y: percentCrop.y
+                }));
+                setCompletedCrop(prev => ({
+                  ...prev,
+                  x: percentCrop.x,
+                  y: percentCrop.y
+                }));
+              }}
               onComplete={(c) => setCompletedCrop(c)}
               aspect={1}
               circularCrop
               className="max-h-full"
+              locked={true}
             >
               <img
                 ref={imgRef}
@@ -228,6 +264,7 @@ const ProfilePictureUpload = () => {
           
           <div className="flex justify-center gap-4">
             <button 
+            type="button"
               onClick={() => {
                 setImgSrc(null);
                 setSelectedFile(null);
@@ -238,6 +275,7 @@ const ProfilePictureUpload = () => {
             </button>
             
             <button 
+            type="button"
               onClick={handleCropConfirm}
               className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
             >
@@ -260,21 +298,29 @@ const ProfilePictureUpload = () => {
           
           <div className="flex justify-center gap-4">
             <button
+            type="button"
               onClick={() => {
                 setCroppedImage(null);
                 setImgSrc(null);
+                setConfirmed(false);
               }}
               className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
             >
-              Try Again
+              Reupload
             </button>
-            <button
-              onClick={handleUpload}
-              disabled={uploading}
-              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-            >
-              {uploading ? 'Uploading...' : 'Upload'}
-            </button>
+            {!confirmed &&
+              <button
+              type="button"
+                onClick={handleUpload}
+                disabled={uploading}
+                className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              >
+                {uploading ? 'Uploading...' : 'Confirm'}
+              </button>
+            }
+            {confirmed &&
+              <p>New Profile Pic Confirmed. </p>
+            }
           </div>
         </div>
       )}

@@ -100,6 +100,7 @@ const SearchInterface = () => {
   };
 
   return (
+    <div class = "body">
     <div class="main-box">
       <h2 class="main-box-title">User Search</h2>
       
@@ -165,6 +166,7 @@ const SearchInterface = () => {
         </div>
       ))}
       </div>
+    </div>
     </div>
     );
     
