@@ -197,7 +197,7 @@ function LoginPage() {
       </form>
 
       {/* <HelloWorld  names={namesArray} /> */}
-      {message && <p>{message}</p>}
+      {/* {message && <p>{message}</p>} */}
       </div>
     </div>
   );

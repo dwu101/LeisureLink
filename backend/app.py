@@ -12,6 +12,8 @@ from sqlalchemy import create_engine, ForeignKey
 from sqlalchemy_utils import database_exists, create_database, relationships, generic_relationship
 from werkzeug.utils import secure_filename
 from pathlib import Path
+from sqlalchemy.orm.attributes import flag_modified
+
 
 
 
@@ -313,6 +315,96 @@ def add_group():
 
     db.session.commit()
     return jsonify({"success": True, "message": "Groups added successfully"})
+@app.route('/createGroup', methods=['POST'])
+def create_group():
+    try:
+        data = request.get_json()
+        
+        # Validate input
+        if 'groupName' not in data or 'usernames' not in data:
+            return jsonify({
+                'success': False,
+                'message': 'Missing required fields: groupName and usernames'
+            }), 400
+            
+        group_name = data['groupName']
+        usernames = data['usernames']
+        
+        # Check if group already exists
+        existing_group = Groups.query.filter_by(group_name=group_name).first()
+        if existing_group:
+            return jsonify({
+                'success': False,
+                'message': 'Group name already exists'
+            }), 400
+            
+        # Get account_ids for all usernames
+        user_account_ids = []
+        users_to_update = []
+        
+        for username in usernames:
+            user = User.query.filter_by(username=username).first()
+            if not user:
+                return jsonify({
+                    'success': False,
+                    'message': f'User {username} not found'
+                }), 404
+            user_account_ids.append(user.account_id)
+            users_to_update.append(user)
+        
+        # Create new group
+        new_group = Groups(
+            group_name=group_name,
+            users=user_account_ids
+        )
+        
+        # Add to database
+        db.session.add(new_group)
+        
+        # Add group to each user's groups array and commit the changes
+        for user in users_to_update:
+            if user.groups is None:
+                user.groups = []
+            # Create a new list instead of modifying in place
+            new_groups = user.groups.copy()
+            new_groups.append(group_name)
+            # Assign the new list to trigger change detection
+            user.groups = new_groups
+            # Flag the column as modified
+            flag_modified(user, "groups")
+            db.session.add(user)
+            
+        # Commit all changes in a single transaction
+        db.session.commit()
+
+        # Verify the changes after commit
+        updated_users = []
+        for username in usernames:
+            user = User.query.filter_by(username=username).first()
+            updated_users.append({
+                'username': username,
+                'groups': user.groups
+            })
+            # print(f"{username}: {user.groups}")
+            
+        return jsonify({
+            'success': True,
+            'message': 'Group created successfully',
+            'group': {
+                'name': group_name,
+                'users': usernames
+            },
+            'updated_users': updated_users
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return jsonify({
+            'success': False,
+            'message': 'An error occurred while creating the group',
+            'error': str(e)
+        }), 500
 
 # Endpoint to delete groups for a user
 @app.route('/deleteGroup', methods=['POST'])
@@ -635,6 +727,54 @@ def remove_friend_endpoint():
     return jsonify(result)
 
 
+
+@app.route('/getFriends/<username>', methods=['GET'])
+def get_user_friends(username):
+    try:
+        # Query the database for the user
+        user = User.query.filter_by(username=username).first()
+        
+        if not user:
+            return jsonify({
+                'success': False,
+                'message': 'User not found'
+            }), 404
+            
+        # Get all users who are friends
+        friends_details = []
+        for friend_username in user.friends:
+            friend = User.query.filter_by(username=friend_username).first()
+            if friend:  # Only add if friend still exists in database
+                friends_details.append({
+                    'username': friend.username,
+                    'display_name': friend.display_name or friend.username  # Fall back to username if no display name
+                })
+        
+        return jsonify({
+            'success': True,
+            'friends': friends_details
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': 'An error occurred while fetching friends',
+            'error': str(e)
+        }), 500
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 @app.route('/authorize')
 def authorize():
     state = secrets.token_urlsafe(32)
@@ -867,7 +1007,7 @@ def insert_dummy_data():
         status="Active",
         groups=["Developers", "Designers"],
         pfp_link="/profile-pictures/TESTING.jpg",
-        friends= ["jane_smith"]
+        friends= ["jane_smith", "joanArc"]
     )
 
     user2 = User(
@@ -883,12 +1023,26 @@ def insert_dummy_data():
         friends= ["john_doe"]
     )
 
+    user3= User(
+        account_id=3,
+        username="joanArc",
+        password="mypassword",
+        email="joanArc@example.com",
+        bio="I love Arcs.",
+        display_name="of Arc, Joan",
+        status="Busy",
+        groups=["Developers", "Designers"],
+        pfp_link="/profile-pictures/defaultpfp.png",
+        friends= ["john_doe"]
+    )
+
     # Add users to the session and commit to generate account_ids
     
     db.session.add(user1)
     print("1")
     db.session.add(user2)
     print("2")
+    db.session.add(user3)
     db.session.commit()
 
     # Use the generated account_ids for UserGCAL

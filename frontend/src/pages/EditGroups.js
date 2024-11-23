@@ -1,8 +1,7 @@
-import './ProfilePage.css';
-import React, { useState, useEffect} from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from '../components/SideBar';
 import Alert from '../components/Alert';
-import { Link, useParams, useLocation, useNavigate} from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import ProfileIcon from "../components/ProfileIcon";
 
 const EditGroups = () => {
@@ -15,10 +14,35 @@ const EditGroups = () => {
   const [showAlert, setShowAlert] = useState(false);
   const [alertType, setAlertType] = useState('success');
   const [alertMessage, setAlertMessage] = useState('');
+  const [newGroupName, setNewGroupName] = useState('');
+  const [groupType, setGroupType] = useState('public');
+  const [friends, setFriends] = useState([]);
+  const [friendsLoading, setFriendsLoading] = useState(true);
+  const [friendsError, setFriendsError] = useState(null);
+
 
   const navigate = useNavigate();
   const username = sessionStorage.getItem('username');
-  
+  const [selectedFriends, setSelectedFriends] = useState([username]);
+  const addGroupRef = useRef(null);
+
+  const scrollToAddGroup = () => {
+    addGroupRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
+  };
+
+  const handleFriendToggle = (friendUsername) => {
+    setSelectedFriends(prev => {
+      if (prev.includes(friendUsername)) {
+        return prev.filter(username => username !== friendUsername);
+      } else {
+        return [...prev, friendUsername];
+      }
+    });
+  };
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -27,6 +51,8 @@ const EditGroups = () => {
         
         if (result.success) {
           setProfile(result.profile);
+          console.log("AAAA")
+          console.log(result.profile.groups)
         } else {
           setError(result.message || 'Failed to fetch profile');
         }
@@ -38,8 +64,28 @@ const EditGroups = () => {
       }
     };
 
+    const fetchFriends = async () => {
+      try {
+        setFriendsLoading(true);
+        const response = await fetch(`/getFriends/${username}`);
+        const result = await response.json();
+        
+        if (result.success) {
+          setFriends(result.friends);
+        } else {
+          setFriendsError(result.message || 'Failed to fetch friends');
+        }
+      } catch (err) {
+        console.log(err);
+        setFriendsError("Error fetching friends");
+      } finally {
+        setFriendsLoading(false);
+      }
+    };
+
     fetchProfile();
-  }, [gcalLinked, username]);
+    fetchFriends();
+  }, [username]);
 
   const handleGroupToggle = (group) => {
     setRemovedGroups(prev => {
@@ -71,6 +117,7 @@ const EditGroups = () => {
           ...prev,
           groups: prev.groups.filter(group => !removedGroups.includes(group))
         }));
+        
         setRemovedGroups([]);
         setAlertMessage("Saved Changes");
         setAlertType("success");
@@ -92,6 +139,53 @@ const EditGroups = () => {
     navigate('/SeeGroup', { state: { group: group } });
   };
 
+  const handleAddGroup = async (e) => {
+    e.preventDefault();
+    if (!newGroupName.trim()) {
+      setAlertMessage("Please enter a group name");
+      setAlertType("error");
+      setShowAlert(true);
+      return;
+    }
+
+    try {
+      const response = await fetch('/createGroup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          groupName: newGroupName,
+          usernames: selectedFriends // Include selected friends in the request
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setProfile(prev => ({
+          ...prev,
+          groups: [...(prev.groups || []), newGroupName]
+        }));
+        setNewGroupName('');
+        setSelectedFriends([]); // Reset selected friends after successful group creation
+        setAlertMessage("Group Added Successfully");
+        setAlertType("success");
+        setShowAlert(true);
+      } else {
+        setAlertMessage(result.message || "Error Adding Group");
+        setAlertType("error");
+        setShowAlert(true);
+      }
+    } catch (error) {
+      console.error('Error adding group:', error);
+      setAlertMessage("Error Adding Group");
+      setAlertType("error");
+      setShowAlert(true);
+    }
+  };
+
+
   return (
     <div className="body">
       <Alert
@@ -104,71 +198,148 @@ const EditGroups = () => {
       
       <div className="main-box">
         <ProfileIcon/>
-        <h2 className="main-box-title">Your Groups</h2>
-        
-        {loading && <div>Loading...</div>}
-        {error && <div className="error">{error}</div>}
-        
-        {(!loading && !error) && (
-          <div style={{marginTop: "20px"}}>
-            <h2>Found {profile?.groups?.length || 0} Group{(profile?.groups?.length || 0) !== 1 ? 's' : ''}</h2>
-          </div>
-        )}
-
-        <div>
-          <div className="search-results">
-            {profile?.groups?.map((group, index) => (
-              <div key={index} className="result-item">
-                <div 
-                  className="user-info-container" 
-                  onClick={() => handleGroupClick(group)}
-                  style={{ display: 'flex', alignItems: 'center', flex: 1, cursor: 'pointer' }}
-                >
-                  <span className="user-icon">👥</span>
-                  <span className="display-name">{group}</span>
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleGroupClick(group);
-                  }}
-                  className="search-button"
-                  style={{
-                    marginLeft: '10px',
-                    backgroundColor: '#3b82f6',
-                    transition: 'background-color 0.2s ease'
-                  }}
-                >
-                  See / Leave Group
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleGroupToggle(group);
-                  }}
-                  className="search-button"
-                  style={{
-                    marginLeft: '10px',
-                    backgroundColor: removedGroups.includes(group) ? '#ef4444' : '#3b82f6',
-                    transition: 'background-color 0.2s ease'
-                  }}
-                >
-                  {removedGroups.includes(group) ? 'Undo Remove' : 'Remove Group'}
-                </button>
-              </div>
-            ))}
+         {/* Your Groups Section with Updated Button Format */}
+         <div className="section-box">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="main-box-title">Your Groups
+              <button
+                onClick={scrollToAddGroup}
+                className="search-button"
+                style={{marginLeft: "435px", height:"30px", marginTop: "0px"}}
+              >
+                Add a Group
+              </button>
+            </h1>
           </div>
           
-          {removedGroups.length > 0 && (
-            <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
-              <button
-                onClick={handleSaveChanges}
-                className="search-button"
-              >
-                Save Changes ({removedGroups.length} changes)
-              </button>
+          {loading && <div>Loading...</div>}
+          {error && <div className="error">{error}</div>}
+          
+          {(!loading && !error) && (
+            <div style={{marginTop: "20px"}}>
+              <h2>Found {profile?.groups?.length || 0} Group{(profile?.groups?.length || 0) !== 1 ? 's' : ''}</h2>
             </div>
           )}
+
+          <div>
+            <div className="search-results">
+              {profile?.groups?.map((group, index) => (
+                <div key={index} className="result-item">
+                  <div 
+                    className="user-info-container" 
+                    onClick={() => handleGroupClick(group)}
+                    style={{ display: 'flex', alignItems: 'center', flex: 1, cursor: 'pointer' }}
+                  >
+                    <span className="user-icon">👥</span>
+                    <span className="display-name">{group}</span>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleGroupClick(group);
+                    }}
+                    className="search-button"
+                    style={{
+                      marginLeft: '10px',
+                      backgroundColor: '#3b82f6',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                  >
+                    See / Leave Group
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleGroupToggle(group);
+                    }}
+                    className="search-button"
+                    style={{
+                      marginLeft: '10px',
+                      backgroundColor: removedGroups.includes(group) ? '#ef4444' : '#3b82f6',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                  >
+                    {removedGroups.includes(group) ? 'Undo Remove' : 'Remove Group'}
+                  </button>
+                </div>
+              ))}
+            </div>
+            
+            {removedGroups.length > 0 && (
+              <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={handleSaveChanges}
+                  className="search-button"
+                >
+                  Save Changes ({removedGroups.length} changes)
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Previous sections remain the same... */}
+        
+        {/* Add Group Section */}
+        <div ref={addGroupRef} className="section-box" style={{ marginTop: '50px' }}>
+          <h2 className="main-box-title">Add Group</h2>
+          <form onSubmit={handleAddGroup} className="add-group-form">
+            <div className="form-group">
+              <input
+                type="text"
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                placeholder="Enter group name"
+                className="text-input"
+              />
+            </div>
+            
+            {/* Friends List Section with Updated Button Styling */}
+            <div className="mt-4">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Add Friends!</h3>
+              {friendsLoading && <div className="text-gray-500">Loading friends...</div>}
+              {friendsError && <div className="text-red-500">{friendsError}</div>}
+              <div className="space-y-2">
+                {friends.map((friend, index) => (
+                  <div 
+                    key={index}
+                    className="p-3 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                    style={{marginTop:"20px"}}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4 flex-1">
+                        <span className="font-medium w-48">{friend.display_name}</span>
+                        <span className="text-gray-500 w-32" style={{marginLeft:"50px"}}>@{friend.username}</span>
+                        <button
+                        type="button"
+                        onClick={() => handleFriendToggle(friend.username)}
+                        className="px-4 py-2 text-white w-32"
+                        style={{
+                          backgroundColor: selectedFriends.includes(friend.username) ? '#ef4444' : '#3b82f6',
+                          color: 'white',
+                          borderRadius: '20px',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          transition: 'background-color 0.2s ease',
+                          marginLeft:"50px"
+                        }}
+                      >
+                        {selectedFriends.includes(friend.username) ? 'Remove Friend' : 'Add Friend'}
+                      </button>
+                      </div>
+                      
+                    </div>
+                  </div>
+                ))}
+                {!friendsLoading && !friendsError && friends.length === 0 && (
+                  <div className="text-gray-500">No friends found</div>
+                )}
+              </div>
+            </div>
+
+            <button type="submit" className="search-button" style={{ marginTop: '20px' }}>
+              Add Group
+            </button>
+          </form>
         </div>
       </div>
     </div>
