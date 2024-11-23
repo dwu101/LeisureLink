@@ -80,7 +80,7 @@ const Sidebar = ({isOpen: propIsOpen, setIsOpen: propSetIsOpen}) => {
             <Link to="/Home" onClick={toggleSidebar}>Home</Link>
           </li>
           <li>
-            <Link to="/EditProfile" onClick={toggleSidebar}>Edit Profile</Link>
+            <Link to="/EditProfile" onClick={toggleSidebar}>Edit Your Profile</Link>
           </li>
           <li>
             <Link to="/services" onClick={toggleSidebar}>Services</Link>
@@ -90,7 +90,7 @@ const Sidebar = ({isOpen: propIsOpen, setIsOpen: propSetIsOpen}) => {
             <Link to="/SearchPage" onClick={toggleSidebar}>Search</Link>
           </li>
           
-          <li style={{marginTop:"50px"} } onClick={logOut}>
+          <li style={{marginTop:"50px",cursor: "pointer"}} onClick={logOut}>
              Sign Out
           </li>
         </ul>

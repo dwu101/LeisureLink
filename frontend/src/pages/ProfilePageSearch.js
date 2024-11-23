@@ -1,23 +1,23 @@
 import './ProfilePage.css';
 import React, { useState, useEffect} from 'react';
 import Sidebar from '../components/SideBar';
-
-import { Link, useParams, useLocation, Navigate, useNavigate } from 'react-router-dom';  
+import ProfileIcon from '../components/ProfileIcon';
+import { Link, useParams, useLocation } from 'react-router-dom';  
 
  
 
 
-const ProfilePage = () => {
+const ProfilePageSearch = () => {
   
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
   const [gcalLinked, setGcalLinked] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const navigate = useNavigate();
 
 
-  const username = sessionStorage.getItem('username');
+  const location = useLocation();
+  const username = location.state?.username || sessionStorage.getItem('username');
 
  
   console.log(username)
@@ -33,44 +33,39 @@ const ProfilePage = () => {
         
         if (result.success) {
           setProfile(result.profile);
-          // console.log("BBBB")
-          // console.log(result.profile.pfp_link)
-          // sessionStorage.setItem('pfp_link', result.profile.pfp_link)
-
         } else {
           setError(result.message || 'Failed to fetch profile');
         }
 
       } catch (err) {
-        console.log(err)
-        setError("ERROR. check logs");
-      } finally {
-        setLoading(false);
-      }
-
-      try {
-        const responseLink = await fetch('/gcalLinked', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ username: username }),
-        });
-      
-        const resultLink = await responseLink.json();
-        // console.log("AAAA");
-        // console.log(resultLink);
-      
-        if (resultLink[1] === true) {
-          setGcalLinked(true);
-        } else {
-          setGcalLinked(false);
-        }
-      } catch (err) {
         setError('Error connecting to server');
       } finally {
         setLoading(false);
       }
+
+    //   try {
+    //     const responseLink = await fetch('/gcalLinked', {
+    //       method: 'POST',
+    //       headers: {
+    //         'Content-Type': 'application/json',
+    //       },
+    //       body: JSON.stringify({ username: username }),
+    //     });
+      
+    //     const resultLink = await responseLink.json();
+    //     // console.log("AAAA");
+    //     // console.log(resultLink);
+      
+    //     if (resultLink[1] === true) {
+    //       setGcalLinked(true);
+    //     } else {
+    //       setGcalLinked(false);
+    //     }
+    //   } catch (err) {
+    //     setError('Error connecting to server');
+    //   } finally {
+    //     setLoading(false);
+    //   }
       
     };
   
@@ -121,30 +116,19 @@ const ProfilePage = () => {
   };
 
   if (loading) {
-    return <div></div>;
+    return <div>Loading...</div>;
   }
 
   if (error) {
     return <div>Error: {error}</div>;
   }
 
-  const handleGroupClick = (group) => {
-    // Navigate to group page or handle group click
-    console.log('Group clicked:', group);
-    // Example: navigate(`/group/${group}`);
-  };
-
-  const handleCreateGroup = () => {
-    // Handle create group action
-    console.log('Create group clicked');
-    // Example: navigate('/create-group');
-  };
-
   return (
     <div>
         <Sidebar isOpen={isOpen} setIsOpen={setIsOpen}/>
+
     <div className="profile-container">
-      
+      <ProfileIcon/>
 
       <aside className="profile-sidebar relative flex flex-col h-full">
         <div className="profile-image-container">
@@ -161,16 +145,16 @@ const ProfilePage = () => {
           <InfoField label="Email" value={profile?.email || 'Loading...'} />
           <InfoField label="Status" value={profile?.status || 'Active'} />
           
-          <button
+          {/* <button
             status={profile.status}
             onClick={handleToggle}
-          >{profile.status==="Active" ? "Click to become Inactive" : "Click to become Active"}</button>
+          >{profile.status==="Active" ? "Click to become Inactive" : "Click to become Active"}</button> */}
 
           <InfoField 
             label="Bio" 
             value={profile?.bio || 'None...'} 
           />
-          {gcalLinked && (
+          {/* {gcalLinked && (
             <div>
             <InfoField label="Calendar" value={"Google Calendar is Linked!"} />
 
@@ -185,7 +169,7 @@ const ProfilePage = () => {
             <div>
             <InfoField label="Calendar" value={"Google Calendar is not Linked"} />
           </div>
-          )}
+          )} */}
         </div>
 
         
@@ -198,67 +182,40 @@ const ProfilePage = () => {
           </div>
         )} */}
 
-        <div className="button-container">
+        {/* <div className="button-container">
           
           <Link to="/GoogleAuth">
           <button style={{marginTop:"20px"}}>Link/Change GCal</button>
           </Link>
-        </div>
+        </div> */}
 
-        <div className="button-container">
+        {/* <div className="button-container"> */}
           
           {/* <Link to="/EditProfile"> */}
-          <button onClick= {() => setIsOpen(!isOpen)} style={{marginTop:"50px", fontSize: "20px"}}>All Actions!</button>
+          {/* <button onClick= {() => setIsOpen(!isOpen)} style={{marginTop:"50px", fontSize: "20px"}}>All Actions!</button> */}
           {/* </Link> */}
-        </div>
+        {/* </div> */}
       </aside>
 
       <main className="profile-main">
-          <div className="featured-project">
-            <div className="groups-header">
-              <h2>Groups</h2>
-              <button 
-                onClick={() => navigate('/EditGroups')}
-                className="create-group-btn"
-              >
-                Edit Groups and Members
-              </button>
-            </div>
-            <div className="groups-list">
-            {profile?.groups?.length > 0 ? (
-  profile.groups.map((group, index) => (
-    <div
-      key={index}
-      // className="group-item"
-      style={{
-        backgroundColor: 'white',
-        padding: '0.75rem',
-        borderRadius: '0.5rem',
-        fontWeight: 'bold',
-        fontSize: '1rem',
-        cursor: 'default',
-        pointerEvents: 'none',  // This will completely disable any hover effects
-        border: '1px solid #e5e7eb', // Optional: adds a subtle border
-        marginBottom: '0rem'  // Adds some spacing between items
-      }}
-    >
-      <h3 style={{ 
-        margin: 0,
-        fontWeight: 'normal',
-        color: '#333'
-      }}>
-        {group}
-      </h3>
-    </div>
-  ))
-) : (
-  <div className="empty-groups">
-    <p>None</p>
-  </div>
-)}
-            </div>
+        <div className="featured-project">
+          <h2>Groups</h2>
+          <div className="groups-list">
+          {profile?.groups?.length > 0 ? (
+              profile.groups.map((group, index) => (
+                <div key={index} className="group-item">
+                  <h3>{group}</h3>
+                </div>
+              ))
+            ) : (
+              <div >
+                <p>None</p>
+              </div>
+            )}
           </div>
-        </main>
+        </div>
+
+      </main>
     </div>
     </div>
   );
@@ -271,4 +228,4 @@ const InfoField = ({ label, value }) => (
   </div>
 );
 
-export default ProfilePage;
+export default ProfilePageSearch;

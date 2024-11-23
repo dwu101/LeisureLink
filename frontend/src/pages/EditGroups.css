@@ -103,9 +103,9 @@
 	transition: transform 0.2s ease;
   }
   
-  /* .post-card:hover {
+  .post-card:hover {
 	transform: translateY(-2px);
-  } */
+  }
   
   .post-card .post-image {
 	width: 100%;
@@ -160,7 +160,7 @@
 	border-radius: 50%;
 	background-color: #dc2626; /* Red color */
 	border: none;
-	/* cursor: pointer; */
+	cursor: pointer;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -172,7 +172,7 @@
   }
   
   .circle-button:hover {
-	background-color: #b91c1c; 
+	background-color: #b91c1c; /* Darker red on hover */
 	transform: translateY(-2px);
 	box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
   }
@@ -213,42 +213,137 @@
 	transition: background-color 0.2s;
   }
   
-
+  .create-group-btn:hover {
+	background-color: #2563eb;
+  }
+  
   .groups-list {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
-	transform: none !important;
-  transition: none !important;
-  box-shadow: none !important;
-  cursor: default;  /* Add this to show the default cursor */
-  user-select: none;  
   }
-  /*  */
+  
   .group-item {
 	background-color: white;
 	padding: 1rem;
 	border-radius: 0.5rem;
-	/* border: 1px solid #e5e7eb; */
-	cursor: default;  /* Add this to show the default cursor */
-  user-select: none;  /* Optional: prevents text selection */
-	/* cursor: pointer; */
-	/* transition: all 0.2s ease-in-out; */
+	border: 1px solid #e5e7eb;
+	cursor: pointer;
+	transition: all 0.2s ease-in-out;
   }
   
-
+  .group-item:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+	background-color: #f9fafb;
+  }
   
   .group-item h3 {
 	color: #1f2937;
 	font-size: 1.125rem;
 	font-weight: 500;
 	margin: 0;
-	transform: none !important;
-  transition: none !important;
-  box-shadow: none !important;
   }
   
   .empty-groups {
 	color: #6b7280;
 	padding: 1rem;
   }
+
+/* Update these styles in your ProfilePage.css */
+
+.group-item-content {
+  display: grid;
+  grid-template-columns: 1fr 120px;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.group-item {
+  background-color: white;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease-in-out;
+}
+
+.group-item.group-item-removed {
+  background-color: #f3f4f6;
+}
+
+.group-item.group-item-removed h3 {
+  color: #6b7280;
+}
+
+.group-item h3 {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #1f2937;
+}
+
+.remove-group-btn {
+  width: 120px;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  border: 1px solid #ef4444;
+  background-color: white;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+  justify-self: end;
+  text-align: center;
+}
+
+.remove-group-btn:hover {
+  background-color: #fee2e2;
+}
+
+.remove-group-btn.removed {
+  border-color: #6b7280;
+  color: #6b7280;
+  background-color: #f3f4f6;
+}
+
+.remove-group-btn.removed:hover {
+  background-color: #e5e7eb;
+}
+
+.create-group-btn {
+  background-color: #3b82f6;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.create-group-btn:hover {
+  background-color: #2563eb;
+}
+
+.groups-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.groups-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.empty-groups {
+  color: #6b7280;
+  padding: 1rem;
+  text-align: center;
+}

@@ -52,6 +52,16 @@ function LoginPage() {
         if (response.data.status === 200){
           setMessage(response.data.message); // Or redirect, etc.
           sessionStorage.setItem('username', username)
+            
+          const responsePFP = await fetch(`/getProfile?username=${username}`);
+            const resultPFP = await responsePFP.json();
+          
+          if (resultPFP.success) {
+          
+            sessionStorage.setItem('pfp_link', resultPFP.profile.pfp_link)
+  
+          } 
+          
           console.log("SUCCESS")
           navigate('/ProfilePage');
         }  
@@ -84,6 +94,7 @@ function LoginPage() {
           
           setMessage(response.data.message);
           sessionStorage.setItem('username', username);
+          sessionStorage.setItem('pfp_link',"/profile-pictures/defaultpfp.png")
           if (response.ok){
             navigate("/ProfilePage");
           }

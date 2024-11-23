@@ -84,12 +84,10 @@ class UserGCAL(db.Model):
 
 class Groups(db.Model):
     __tablename__='Groups'
-    group_id=db.Column(db.Integer,primary_key=True)
-    group_name=db.Column(db.String(40), nullable=False)
+    group_name=db.Column(db.String(40), nullable=False,primary_key=True)
     users=db.Column(db.ARRAY(db.Integer, ForeignKey(User.account_id)))
 
-    def __init__(self, group_id, group_name, users):
-        self.group_id=group_id
+    def __init__(self, group_name, users):
         self.group_name=group_name
         self.users=users
 
@@ -286,6 +284,7 @@ def get_profile():
     }
     # print(profile)
     if all(value is not None for value in profile.values()):
+        # print("HERE")
         return jsonify({"success": True, "profile": profile})
     else:
         return jsonify({"success": False, "message": "User not found"}), 404
@@ -321,6 +320,8 @@ def delete_group():
     data = request.json
     username = data.get('username')
     group_names = data.get('groups', [])
+    print(username)
+    print(group_names)
 
     if not username or not isinstance(group_names, list):
         return jsonify({"success": False, "message": "Invalid input"}), 400
@@ -332,27 +333,141 @@ def delete_group():
     # Delete the groups from the user's list
     for group_name in group_names:
         group = Groups.query.filter_by(group_name=group_name).first()
-        if group and user.account_id in group.users:
-            group.users.remove(user.account_id)
-            if not group.users:
-                db.session.delete(group)  # Delete the group if no users remain
+        if group:
+            # Convert tuple to list, remove user, and convert back to tuple
+            users_list = list(group.users)
+            if user.account_id in users_list:
+                users_list.remove(user.account_id)
+                group.users = tuple(users_list)  # Convert back to tuple
+                
+                if not users_list:  # If no users remain
+                    db.session.delete(group)
+        
+        if user.groups is not None and group_name in user.groups:
+            updated_groups = [g for g in user.groups if g != group_name]
+            user.groups = updated_groups
 
     db.session.commit()
+
     return jsonify({"success": True, "message": "Groups deleted successfully"})
 
-# Endpoint to search for users or groups
-@app.route('/search', methods=['GET'])
-def search():
-    query = request.args.get('query', '')
-    search_by = request.args.get('searchBy', '')
+@app.route('/getGroupUsers', methods=['POST'])
+def get_group_users():
+    data = request.json
+    group_name = data.get('group_name')
+    
+    
+    if not group_name:
+        return jsonify({"success": False, "message": "Group name is required"}), 400
+    
+    group = Groups.query.filter_by(group_name=group_name).first()
+    if not group:
+        return jsonify({"success": False, "message": "Group not found"}), 404
+    
+    if group.users:
+        users = User.query.filter(User.account_id.in_(group.users)).all()
+        users_data = [{
+            'username': user.username,
+            'display_name': user.display_name,
+            'status': user.status
+        } for user in users]
+        
+        return jsonify({
+            "success": True,
+            "group_name": group_name,
+            "users": users_data
+        })
+    
+    return jsonify({
+        "success": True,
+        "group_name": group_name,
+        "users": []
+    })
 
+@app.route('/removeGroupMembers', methods=['POST'])
+def remove_group_members():
+    try:
+        data = request.json
+        group_name = data.get('group_name')
+        usernames = data.get('members', [])  # List of usernames to remove
+        print(group_name)
+        print(usernames)
+
+        if not group_name or not isinstance(usernames, list):
+            return jsonify({
+                "success": False,
+                "message": "Invalid input - group name or members list missing"
+            }), 400
+
+        # Get the group
+        group = Groups.query.filter_by(group_name=group_name).first()
+        if not group:
+            return jsonify({
+                "success": False,
+                "message": f"Group {group_name} not found"
+            }), 404
+
+        # Get all users that need to be removed
+        users_to_remove = User.query.filter(User.username.in_(usernames)).all()
+        if not users_to_remove:
+            return jsonify({
+                "success": False,
+                "message": "No valid users found to remove"
+            }), 404
+
+        # Keep track of successful removals
+        removed_users = []
+        
+        for user in users_to_remove:
+            # Remove the group from user's groups list
+            if user.groups is not None and group_name in user.groups:
+                user.groups = [g for g in user.groups if g != group_name]
+            
+            # Remove user's account_id from group's users list
+            if group.users is not None and user.account_id in group.users:
+                group.users = [u for u in group.users if u != user.account_id]
+                removed_users.append(user.username)
+
+        # If all users were removed from the group, you might want to delete the group
+        if not group.users:
+            db.session.delete(group)
+        
+        # Commit all changes
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": f"Successfully removed {len(removed_users)} members from {group_name}",
+            "removed_users": removed_users
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "success": False,
+            "message": f"An error occurred: {str(e)}"
+        }), 500
+
+# Endpoint to search for users or groups
+@app.route('/search', methods=['POST'])
+def search():
+    data = request.get_json()
+    query = data.get('query')
+    search_by = data.get('searchBy')
+    query = query.lower()
+
+    print(query)
+    print(search_by)
     if not query or search_by not in ["username", "displayName", "group"]:
+        
         return jsonify({"success": False, "message": "Invalid search parameters"}), 400
 
     results = []
 
     if search_by == "username":
+        # print("here")
         users = User.query.filter(User.username.ilike(f"%{query}%")).all()
+        print(f"users {users}")
     elif search_by == "displayName":
         users = User.query.filter(User.display_name.ilike(f"%{query}%")).all()
     elif search_by == "group":
@@ -364,12 +479,14 @@ def search():
 
     for user in users:
         results.append({
-            "pfp_link": user.pfp_link,
+            "status": user.status,
             "username": user.username,
             "displayName": user.display_name
         })
 
-    return jsonify({"success": True, "results": results})
+    print(jsonify({"success": 200, "results": results}))
+    # return jsonify({"success": 200, "results": results})
+    return results
 
 # Endpoint to change password
 @app.route('/changePassword', methods=['POST'])
@@ -748,7 +865,7 @@ def insert_dummy_data():
         bio="Just a regular user.",
         display_name="John Doe",
         status="Active",
-        groups=["xxxx", "2"],
+        groups=["Developers", "Designers"],
         pfp_link="/profile-pictures/TESTING.jpg",
         friends= ["jane_smith"]
     )
@@ -761,8 +878,8 @@ def insert_dummy_data():
         bio="I love coding and coffee.",
         display_name="Jane Smith",
         status="Busy",
-        groups=["1"],
-        pfp_link="/profile-pictures/TESTING.jpg",
+        groups=["Developers"],
+        pfp_link="/profile-pictures/defaultpfp.png",
         friends= ["john_doe"]
     )
 
@@ -801,13 +918,11 @@ def insert_dummy_data():
 
     # Insert dummy data into the Groups table
     group1 = Groups(
-        group_id=1,
         group_name="Developers",
         users=[user1.account_id, user2.account_id]  # Use account_ids from users
     )
 
     group2 = Groups(
-        group_id=2,
         group_name="Designers",
         users=[user1.account_id]  # Use account_id from user1
     )

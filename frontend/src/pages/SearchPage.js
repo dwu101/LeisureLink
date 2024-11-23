@@ -1,5 +1,6 @@
+import { useNavigate } from "react-router-dom";
 import "./SearchPage.css"
-
+import ProfileIcon from "../components/ProfileIcon";
 import React, { useState } from 'react';
 
 const SearchIcon = () => (
@@ -21,6 +22,7 @@ const SearchIcon = () => (
 );
 
 const SearchInterface = () => {
+  const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('');
   const [searchBy, setSearchBy] = useState('username');
   const [results, setResults] = useState([]);
@@ -47,21 +49,27 @@ const SearchInterface = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          query: searchQuery,
-          searchType: searchBy
+          "query": searchQuery,
+          "searchBy": searchBy
         })
       });
       
       if (!response.ok) {
+        console.log("!!!!!")
         throw new Error('Search failed');
       }
-
-      const data = await response.json();
-      setResults(Array.isArray(data) ? data : []);
-      
-      if (Array.isArray(data) && data.length === 0) {
-        setError('No results found');
+      else{
+        console.log(response.json)
+        const data = await response.json();
+        setResults(Array.isArray(data) ? data : []);console.log(results)
+        if (Array.isArray(data) && data.length === 0) {
+          setError('No results found');
+        }
+        
       }
+
+      
+      
     } catch (err) {
       setError('Failed to fetch results. Please try again.');
       console.error('Search error:', err);
@@ -99,22 +107,30 @@ const SearchInterface = () => {
     }
   };
 
+  const handleClick = (username) => {
+    console.log("Clicked user:", username);
+    navigate('/ProfilePageSearch', { state: { username: username } });
+
+};
+
   return (
-    <div class = "body">
-    <div class="main-box">
-      <h2 class="main-box-title">User Search</h2>
+    <div className = "body">
+      
+    <div className="main-box">
+    <ProfileIcon/>
+      <h2 className="main-box-title">User Search</h2>
       
       {/* Search Input */}
-      <div class="namesearch-section">
+      <div className="namesearch-section">
       <input
-        class="name-search-box"
+        className="name-search-box"
         type="text"
         placeholder={getSearchPlaceholder()}
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         onKeyPress={handleKeyPress}
       />
-      <button class="search-button"
+      <button className="search-button"
         onClick={handleSearch}
         disabled={loading}
       >
@@ -126,7 +142,7 @@ const SearchInterface = () => {
       </div>
     
       {/* Search Options */}
-      <div class="filter-selections">
+      <div className="filter-selections">
       {['username', 'displayName', 'group'].map((option) => (
         <label key={option}>
         <input
@@ -147,24 +163,23 @@ const SearchInterface = () => {
       {error && <div>{error}</div>}
     
       {/* Search Results */}
-      {buttonClicked && (
-      <div>
+      {(buttonClicked && !error) && (
+      <div style={{marginTop: "50px"}}>
         <h2>Found {results.length} result{results.length !== 1 ? 's' : ''}</h2>
       </div>
       )}
     
       <div>
-      {results.map((result, index) => (
-        <div key={index}>
-        <div>
-          <span>👤</span>
-        </div>
-        <div>
-          <p>{result.displayName}</p>
-          <p>@{result.username}</p>
-        </div>
-        </div>
-      ))}
+      <div className="search-results">
+        {results.map((result, index) => (
+          <div key={index} className="result-item" onClick={ () => handleClick(result.username)}>
+            <span className="user-icon">👤</span>
+            <span className="display-name">{result.displayName}</span>
+            <span className="username">@{result.username}</span>
+            <span className="status" style={{marginLeft: "50px"}}>{result.status}</span>
+            </div>
+        ))}
+</div>
       </div>
     </div>
     </div>
