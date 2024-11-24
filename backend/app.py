@@ -171,10 +171,10 @@ def add_friend(current_user, friend_username):
     if not current_user_obj or not friend_user_obj:
         return {"success": False, "message": "User not found"}
 
-    if friend_user_obj.account_id in current_user_obj.friends:
+    if friend_user_obj.username in current_user_obj.friends:
         return {"success": False, "message": "Friend already added"}
 
-    current_user_obj.friends.append(friend_user_obj.account_id)
+    current_user_obj.friends.append(friend_user_obj.username)
     db.session.commit()
     return {"success": True, "message": "Friend added successfully"}
 
@@ -463,6 +463,8 @@ def get_group_users():
             'display_name': user.display_name,
             'status': user.status
         } for user in users]
+
+        print(users_data)
         
         return jsonify({
             "success": True,
@@ -697,10 +699,57 @@ def change_pfp():
 def gcalLinked():
     data = request.json
     username = data.get('username')
-    # print(username)
-    # print(UserGCAL.query.filter_by(username=username).first())
-    # print(UserGCAL.query.filter_by(username=username).first() != None)
+
     return jsonify(200,UserGCAL.query.filter_by(username=username).first() != None)
+
+
+@app.route('/checkFriendship', methods=['POST'])
+def check_friendship():
+    try:
+        data = request.get_json()
+        
+        # Validate input
+        if 'currentUsername' not in data or 'friendUsername' not in data:
+            return jsonify({
+                'success': False,
+                'message': 'Missing required fields: currentUsername and friendUsername'
+            }), 400
+            
+        current_username = data['currentUsername']
+        friend_username = data['friendUsername']
+        
+        # Get user objects
+        current_user = User.query.filter_by(username=current_username).first()
+        friend_user = User.query.filter_by(username=friend_username).first()
+        
+        # Check if both users exist
+        if not current_user:
+            return jsonify({
+                'success': False,
+                'message': f'User {current_username} not found'
+            }), 404
+            
+        if not friend_user:
+            return jsonify({
+                'success': False,
+                'message': f'User {friend_username} not found'
+            }), 404
+            
+        # Check if they're friends
+        is_friend = friend_username in current_user.friends if current_user.friends else False
+        
+        return jsonify({
+            'success': True,
+            'areFriends': is_friend,
+        }), 200
+        
+    except Exception as e:
+        print(e)
+        return jsonify({
+            'success': False,
+            'message': 'An error occurred while checking friendship status',
+            'error': str(e)
+        }), 500
 
 @app.route('/addFriend', methods=['POST'])
 def add_friend_endpoint():
@@ -731,7 +780,6 @@ def remove_friend_endpoint():
 @app.route('/getFriends/<username>', methods=['GET'])
 def get_user_friends(username):
     try:
-        # Query the database for the user
         user = User.query.filter_by(username=username).first()
         
         if not user:
@@ -740,14 +788,13 @@ def get_user_friends(username):
                 'message': 'User not found'
             }), 404
             
-        # Get all users who are friends
         friends_details = []
         for friend_username in user.friends:
             friend = User.query.filter_by(username=friend_username).first()
-            if friend:  # Only add if friend still exists in database
+            if friend: 
                 friends_details.append({
                     'username': friend.username,
-                    'display_name': friend.display_name or friend.username  # Fall back to username if no display name
+                    'display_name': friend.display_name or friend.username  
                 })
         
         return jsonify({

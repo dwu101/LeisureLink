@@ -3,21 +3,118 @@ import "./SearchPage.css"
 import "./EditGroups.css"
 import ProfileIcon from "../components/ProfileIcon";
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
+import NavigationPrompt from '../components/NavigationPrompt';
+
 
 const SeeGroup = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchBy, setSearchBy] = useState('username');
+
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [buttonClicked, setButtonClicked] = useState(false);
   const [removedMembers, setRemovedMembers] = useState([]);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [navPath, setNavPath] = useState('');
+  const [nextLocation, setNextLocation] = useState(null);
 
-  const location = useLocation();
-  const group = location.state?.group;
+
+  
   const username = sessionStorage.getItem('username')
+
+  const { group } = useParams();
+
+  useEffect(() => {
+    const unsavedChanges = removedMembers.length >= 1;
+    setHasChanges(unsavedChanges);
+  }, [removedMembers]);
+  useEffect(() => {
+    const handlePopState = (event) => {
+      if (hasChanges) {
+        // Prevent the default navigation
+        event.preventDefault();
+        event.stopPropagation();
+        
+        // Store the current URL
+        const currentUrl = window.location.href;
+        
+        // Get the URL we're trying to navigate to
+        const nextUrl = document.location.pathname;
+        
+        // Store the attempted navigation path
+        setNavPath(nextUrl);
+        setShowPrompt(true);
+        
+        // Push the current state back to prevent navigation
+        window.history.pushState(null, '', currentUrl);
+      }
+    };
+  
+    // Block initial navigation when component mounts
+    if (hasChanges) {
+      window.history.pushState(null, '', window.location.href);
+    }
+  
+    window.addEventListener('popstate', handlePopState);
+  
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [hasChanges]);
+
+  useEffect(() => {
+    if (nextLocation) {
+      navigate(nextLocation);
+      setNextLocation(null);
+    }
+  }, [nextLocation, navigate]);
+  
+
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [hasChanges]);
+
+  const handleNavigation = (path) => {
+    if (hasChanges) {
+      setNavPath(path);
+      setShowPrompt(true);
+    } else {
+      navigate(path);
+    }
+  };
+
+  const handleStay = () => {
+    setShowPrompt(false);
+    setNavPath('');
+    setNextLocation(null);
+    // Push current URL again to ensure we stay on this page
+    window.history.pushState(null, '', window.location.href);
+  };
+
+  const handleLeave = () => {
+    setShowPrompt(false);
+    setHasChanges(false);
+    
+    if (navPath) {
+      // Store the navigation target
+      setNextLocation(navPath);
+    }
+    setNavPath('');
+  };
+
 
   useEffect(() => {
     if (group) {
@@ -67,7 +164,7 @@ const SeeGroup = () => {
   };
 
   const handleClick = (username) => {
-    navigate('/profile', { state: { username: username } });
+    handleNavigation(`/ProfilePageSearch/${username}`);
   };
 
   const handleRemoveMember = (e, username) => {
@@ -97,6 +194,7 @@ const SeeGroup = () => {
       const data = await response.json();
       
       if (data.success) {
+        setHasChanges(false);
         if (removedMembers.includes(username)) {
           navigate('/ProfilePage');
         } else {
@@ -215,6 +313,13 @@ const SeeGroup = () => {
           )}
         </div>
       </div>
+
+      <NavigationPrompt
+        when={showPrompt}
+        message="You have unsaved changes. Are you sure you want to leave?"
+        onOK={handleLeave}
+        onCancel={handleStay}
+      />
     </div>
   );
 };

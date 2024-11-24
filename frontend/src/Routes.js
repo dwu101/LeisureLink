@@ -20,12 +20,12 @@ const routes = [
   <Route path="/GoogleAuth" element={<GoogleAuth />} key="GoogleAuth" />,
   <Route path="/AddEvent" element={<AddEvent />} key="AddEvent" />,
   <Route path="/SearchPage" element={<SearchPage />} key="SearchPage" />,
-  <Route path="/ProfilePage/:username?" element={<ProfilePage />} key="ProfilePage" />,
+  <Route path="/ProfilePage" element={<ProfilePage />} key="ProfilePage" />,
   <Route path="/EditProfile" element={<EditProfile />} key="EditProfile" />,
-  <Route path="/ProfilePageSearch" element={<ProfilePageSearch />} key="ProfilePageSearch" />,
+  <Route path="/ProfilePageSearch/:usernametmp?" element={<ProfilePageSearch />} key="ProfilePageSearch" />,
   <Route path="/Testing" element={<Testing />} key="Testing" />,
   <Route path="/EditGroups" element={<EditGroups />} key="EditGroups" />,
-  <Route path="/SeeGroup" element={<SeeGroup />} key="SeeGroup" />,
+  <Route path="/SeeGroup/:group" element={<SeeGroup />} />
 
 ];
 

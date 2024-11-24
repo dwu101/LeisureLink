@@ -1,21 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from '../components/SideBar';
 import Alert from '../components/Alert';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useBeforeUnload  } from 'react-router-dom';
 import ProfileIcon from "../components/ProfileIcon";
+import NavigationPrompt from '../components/NavigationPrompt';
+
 
 const EditGroups = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
-  const [gcalLinked, setGcalLinked] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [removedGroups, setRemovedGroups] = useState([]);
   const [showAlert, setShowAlert] = useState(false);
   const [alertType, setAlertType] = useState('success');
   const [alertMessage, setAlertMessage] = useState('');
   const [newGroupName, setNewGroupName] = useState('');
-  const [groupType, setGroupType] = useState('public');
   const [friends, setFriends] = useState([]);
   const [friendsLoading, setFriendsLoading] = useState(true);
   const [friendsError, setFriendsError] = useState(null);
@@ -25,6 +25,83 @@ const EditGroups = () => {
   const username = sessionStorage.getItem('username');
   const [selectedFriends, setSelectedFriends] = useState([username]);
   const addGroupRef = useRef(null);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [navPath, setNavPath] = useState('');
+  // const [navDestination, setNavDestination] = useState({ path: '', state: null });
+
+
+  useEffect(() => {
+    const handlePopState = (event) => {
+      if (hasChanges) {
+        event.preventDefault();
+        
+        const currentUrl = window.location.href;
+        
+        setNavPath(event.target.location.pathname);
+        setShowPrompt(true);
+        
+        window.history.pushState(null, '', currentUrl);
+      }
+    };
+  
+    window.addEventListener('popstate', handlePopState);
+  
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [hasChanges]);
+
+  useEffect(() => {
+    const unsavedChanges = newGroupName.trim() !== '' || selectedFriends.length >= 2 || removedGroups.length >= 1;
+    setHasChanges(unsavedChanges);
+  }, [newGroupName, selectedFriends]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+  
+    window.addEventListener('beforeunload', handleBeforeUnload);
+  
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [hasChanges]);
+
+  useEffect(() => {
+    if (hasChanges) {
+      window.history.pushState(null, '', window.location.href);
+    }
+  }, [hasChanges]);
+
+  const handleNavigation = (path) => {
+    if (hasChanges) {
+      setNavPath(path);
+      setShowPrompt(true);
+    } else {
+      navigate(path);
+    }
+  };
+  
+  const handleStay = () => {
+    setShowPrompt(false);
+    setNavPath('');
+  };
+  
+  const handleLeave = () => {
+    setShowPrompt(false);
+    setHasChanges(false);
+    
+    if (navPath) {
+      navigate(navPath);
+    }
+    setNavPath('');
+  };
 
   const scrollToAddGroup = () => {
     addGroupRef.current?.scrollIntoView({
@@ -136,7 +213,7 @@ const EditGroups = () => {
   };
   
   const handleGroupClick = (group) => {
-    navigate('/SeeGroup', { state: { group: group } });
+    handleNavigation(`/SeeGroup/${group}`);
   };
 
   const handleAddGroup = async (e) => {
@@ -172,6 +249,7 @@ const EditGroups = () => {
         setAlertMessage("Group Added Successfully");
         setAlertType("success");
         setShowAlert(true);
+        setHasChanges(false);
       } else {
         setAlertMessage(result.message || "Error Adding Group");
         setAlertType("error");
@@ -207,7 +285,7 @@ const EditGroups = () => {
                 className="search-button"
                 style={{marginLeft: "435px", height:"30px", marginTop: "0px"}}
               >
-                Add a Group
+                Create Group
               </button>
             </h1>
           </div>
@@ -282,7 +360,7 @@ const EditGroups = () => {
         
         {/* Add Group Section */}
         <div ref={addGroupRef} className="section-box" style={{ marginTop: '50px' }}>
-          <h2 className="main-box-title">Add Group</h2>
+          <h2 className="main-box-title">Create a Group!</h2>
           <form onSubmit={handleAddGroup} className="add-group-form">
             <div className="form-group">
               <input
@@ -296,7 +374,7 @@ const EditGroups = () => {
             
             {/* Friends List Section with Updated Button Styling */}
             <div className="mt-4">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Add Friends!</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Add Friends to the group</h3>
               {friendsLoading && <div className="text-gray-500">Loading friends...</div>}
               {friendsError && <div className="text-red-500">{friendsError}</div>}
               <div className="space-y-2">
@@ -337,11 +415,18 @@ const EditGroups = () => {
             </div>
 
             <button type="submit" className="search-button" style={{ marginTop: '20px' }}>
-              Add Group
+              Create
             </button>
           </form>
         </div>
       </div>
+
+      <NavigationPrompt
+  when={showPrompt}
+  message="You have unsaved changes. Are you sure you want to leave?"
+  onOK={handleLeave}
+  onCancel={handleStay}
+/>
     </div>
   );
 };

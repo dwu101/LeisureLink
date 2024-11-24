@@ -2,7 +2,8 @@ import './ProfilePage.css';
 import React, { useState, useEffect} from 'react';
 import Sidebar from '../components/SideBar';
 import ProfileIcon from '../components/ProfileIcon';
-import { Link, useParams, useLocation } from 'react-router-dom';  
+import { useLocation, useParams } from 'react-router-dom';  
+import Alert from '../components/Alert';
 
  
 
@@ -12,12 +13,16 @@ const ProfilePageSearch = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
-  const [gcalLinked, setGcalLinked] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertType, setAlertType] = useState('success');
+  const [alertMessage, setAlertMessage] = useState('');
+  const [isFriend, setIsFriend] = useState(false);
 
+  const { usernametmp } = useParams();
 
   const location = useLocation();
-  const username = location.state?.username || sessionStorage.getItem('username');
+  const username = location.state?.username || usernametmp
 
  
   console.log(username)
@@ -25,8 +30,6 @@ const ProfilePageSearch = () => {
   useEffect(() => {
 
     const fetchProfile = async () => {
- 
-
       try {
         const response = await fetch(`/getProfile?username=${username}`);
           const result = await response.json();
@@ -42,77 +45,60 @@ const ProfilePageSearch = () => {
       } finally {
         setLoading(false);
       }
+    };
 
-    //   try {
-    //     const responseLink = await fetch('/gcalLinked', {
-    //       method: 'POST',
-    //       headers: {
-    //         'Content-Type': 'application/json',
-    //       },
-    //       body: JSON.stringify({ username: username }),
-    //     });
-      
-    //     const resultLink = await responseLink.json();
-    //     // console.log("AAAA");
-    //     // console.log(resultLink);
-      
-    //     if (resultLink[1] === true) {
-    //       setGcalLinked(true);
-    //     } else {
-    //       setGcalLinked(false);
-    //     }
-    //   } catch (err) {
-    //     setError('Error connecting to server');
-    //   } finally {
-    //     setLoading(false);
-    //   }
-      
+    const checkFriendshipStatus = async () => {
+      try {
+        const response = await fetch('/checkFriendship', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            currentUsername: sessionStorage.getItem('username'), // Current logged-in user
+            friendUsername: username // Profile being viewed
+          }),
+        });
+  
+        const result = await response.json();
+        if (result.success) {
+          setIsFriend(result.areFriends);
+        } else {
+          console.error('Failed to check friendship status:', result.message);
+        }
+      } catch (error) {
+        console.error('Error checking friendship status:', error);
+      }
     };
   
-
+    checkFriendshipStatus();
     fetchProfile();
-  }, [gcalLinked, username]);
+  }, [username]);
 
-  const handleToggle = async () => {
-    if (profile.status === "Active"){
-      setProfile(prev => ({ ...prev, status: "Busy" }));
-    }
-    else{
-      setProfile(prev => ({ ...prev, status: "Active" }));
-    }
-
-    const data = {
-      username: username,
-      newStatus: profile.status,
-
-    };
-
+  const handleAddFriend = async () => {
     try {
-      const response = await fetch('/changeStatus', {
+      const response = await fetch('/addFriend', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          current_user: sessionStorage.getItem('username'),
+          friend_username: username
+        }),
       });
-
+  
       const result = await response.json();
-      console.log(result)
-
-      // if (response.ok) {
-      //   setStatusMessage('Status changed successfully');
-      // } else {
-      //   setStatusMessage(`Error: ${result.message}`);
-      // }
+      if (result.success) {
+        setShowAlert(true);
+        setAlertType('success');
+        setAlertMessage('Successfully Added Friend!')
+      } else {
+        console.error('Failed to send friend request:', result.message);
+      }
     } catch (error) {
-      // setStatusMessage('Error: Could not update status');
-      console.error('Error:', error);
+      console.error('Error sending friend request:', error);
     }
-
-
-
-
-    console.log(profile.status);
   };
 
   if (loading) {
@@ -127,6 +113,13 @@ const ProfilePageSearch = () => {
     <div>
         <Sidebar isOpen={isOpen} setIsOpen={setIsOpen}/>
 
+        <Alert
+        show={showAlert}
+        type={alertType}
+        message={alertMessage}
+        onClose={() => setShowAlert(false)}
+      />
+
     <div className="profile-container">
       <ProfileIcon/>
 
@@ -140,36 +133,39 @@ const ProfilePageSearch = () => {
         </div>
         
         <div className="profile-info flex-grow">
+        {!isFriend &&
+            <div className="mt-4 text-green-600 friend-button-container">
+              <button
+                onClick={handleAddFriend}
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+              >
+                + Add Friend !
+              </button>
+            </div>
+          }
+
+          {isFriend &&
+            <div className="mt-4 text-green-600 friend-button-container">
+              <button 
+                className="px-4 py-2 bg-gray-400 text-white rounded-md cursor-not-allowed"
+              >
+                Friend Already Added!
+              </button>
+            </div>
+          }
           <InfoField label="Name" value={profile?.display_name || 'None'} />
           <InfoField label="Username" value={username} />
           <InfoField label="Email" value={profile?.email || 'Loading...'} />
           <InfoField label="Status" value={profile?.status || 'Active'} />
           
-          {/* <button
-            status={profile.status}
-            onClick={handleToggle}
-          >{profile.status==="Active" ? "Click to become Inactive" : "Click to become Active"}</button> */}
+      
 
           <InfoField 
             label="Bio" 
             value={profile?.bio || 'None...'} 
           />
-          {/* {gcalLinked && (
-            <div>
-            <InfoField label="Calendar" value={"Google Calendar is Linked!"} />
-
-            <Link to="/AddEvent">
-              <button>
-                  Create an Event!
-              </button>
-            </Link>
-          </div>
-          )}
-          {!gcalLinked && (
-            <div>
-            <InfoField label="Calendar" value={"Google Calendar is not Linked"} />
-          </div>
-          )} */}
+          
+         
         </div>
 
         
