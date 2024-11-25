@@ -14,6 +14,12 @@ const Sidebar = ({isOpen: propIsOpen, setIsOpen: propSetIsOpen, onClickFunc = nu
   const [alertType, setAlertType] = useState('error');
   const [alertMessage, setAlertMessage] = useState('error');
 
+  let gcalLinked = sessionStorage.getItem('gcalLinked') === "true";
+    console.log("HHH")
+  console.log(sessionStorage.getItem('gcalLinked'))
+  console.log(gcalLinked)
+
+
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
   };
@@ -83,15 +89,21 @@ const Sidebar = ({isOpen: propIsOpen, setIsOpen: propSetIsOpen, onClickFunc = nu
         <Link to="/EditProfile" onClick={toggleSidebar}>Edit Your Profile</Link>
         </li>
          
-         
+        <li>
+            <Link to="/EditGroups" onClick={toggleSidebar}>Edit Groups</Link>
+          </li>
 
           <li>
             <Link to="/SearchPage" onClick={toggleSidebar}>Search</Link>
           </li>
 
-          <li>
-            <Link to="/EditGroups" onClick={toggleSidebar}>Edit Groups</Link>
-          </li>
+          {gcalLinked && (
+  <li>
+    <Link to="/AddEvent" onClick={toggleSidebar}>Schedule a Hang Out!</Link>
+  </li>
+)}
+
+          
           
           <li style={{marginTop:"50px",cursor: "pointer"}} onClick={logOut}>
              Sign Out
@@ -107,11 +119,18 @@ const Sidebar = ({isOpen: propIsOpen, setIsOpen: propSetIsOpen, onClickFunc = nu
           <li style={{marginTop:"40px", cursor:"pointer"}} onClick={() => onClickFunc('/EditProfile')}>Edit Your Profile
           </li>
 
+          <li style={{cursor:"pointer"}}onClick={() => onClickFunc('/EditGroups')}>Edit Groups
+          </li>
+
           <li style={{cursor:"pointer"}}onClick={() => onClickFunc('/SearchPage')}>Search
           </li>
 
-          <li style={{cursor:"pointer"}}onClick={() => onClickFunc('/EditGroups')}>Search
-          </li>
+          {gcalLinked &&
+            <li style={{cursor:"pointer"}}onClick={() => onClickFunc('/AddEvent')}>Schedule a Hang Out!
+            </li>
+          }
+
+          
 
 
         

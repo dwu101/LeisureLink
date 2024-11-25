@@ -13,6 +13,7 @@ from sqlalchemy_utils import database_exists, create_database, relationships, ge
 from werkzeug.utils import secure_filename
 from pathlib import Path
 from sqlalchemy.orm.attributes import flag_modified
+from settings import john_doe, jane_smith
 
 
 
@@ -971,6 +972,7 @@ def oauth2callback():
         cookies[state]["scopes"] = credentials.scopes
 
 
+        print(cookies[state])
         print("Session after storing credentials:", dict(session))
 
         # Instead of redirecting, return a response that sets a cookie and then redirects
@@ -1008,28 +1010,29 @@ def check_cred():
     return jsonify({
         'authenticated': has_credentials,
     })
+
+
 @app.route('/addEvent', methods=['POST'])
 def add_event():
-    curr = cookies[session['state']]
+    # curr = cookies[session['state']]
     try:
-        if 'state' not in session:
-            return jsonify({'error': 'Not authenticated'}), 401
+        # print("A")
+        # if 'state' not in session:
+        #     return jsonify({'error': 'Not authenticated'}), 401
 
-        # Get credentials from session
-        credentials = Credentials(
-            token=curr['token'],
-            refresh_token=curr['refresh_token'],
-            token_uri=curr['token_uri'],
-            client_id=curr['client_id'],
-            client_secret=curr['client_secret'],
-            scopes=curr['scopes']
-        )
+        # credentials = Credentials(
+        #     token=curr['token'],
+        #     refresh_token=curr['refresh_token'],
+        #     token_uri=curr['token_uri'],
+        #     client_id=curr['client_id'],
+        #     client_secret=curr['client_secret'],
+        #     scopes=curr['scopes']
+        # )
 
-        # Build the service
-        service = build('calendar', 'v3', credentials=credentials)
-
-        # Get event details from request
+        # service = build('calendar', 'v3', credentials=credentials)
+        # print("B")
         data = request.json
+        print(data)
         
         event = {
             'summary': data['summary'],
@@ -1043,16 +1046,28 @@ def add_event():
                 'timeZone': 'UTC',
             },
         }
+        friends = data['friends']
+        for friend in friends:
+            friend_creds = UserGCAL.query.filter_by(username=friend).first()
+            
+            if friend_creds:
+                friend_credentials = Credentials(
+                    token=friend_creds.token,
+                    refresh_token=friend_creds.refresh_token,
+                    token_uri=friend_creds.token_uri,
+                    client_id=friend_creds.client_id,
+                    client_secret=friend_creds.client_secret,
+                    scopes=friend_creds.scopes
+                )
+                
+                friend_service = build('calendar', 'v3', credentials=friend_credentials)
+                
+                friend_service.events().insert(calendarId='primary', body=event).execute()
 
-        # Add the event to the user's calendar
-        event = service.events().insert(calendarId='primary', body=event).execute()
-        return jsonify({'success': True, 'eventId': event['id']})
-
+        return jsonify({'success': True})
     except Exception as e:
-        print(f"Error details: {str(e)}")
+        print(e)
         return jsonify({'error': str(e)}), 500
-    
-
 
 @app.route('/logout', methods=['POST', 'OPTIONS'])
 def logout():
@@ -1191,17 +1206,27 @@ def insert_dummy_data():
     db.session.commit()
 
     # Use the generated account_ids for UserGCAL
-    # user_gcal1 = UserGCAL(
-    #     account_id=user1.account_id,  # Use the account_id from user1
-    #     username="john_doe",
-    #     client_id="client123",
-    #     project_id="project123",
-    #     auth_uri="https://example.com/auth",
-    #     token_uri="https://example.com/token",
-    #     auth_provider_x509_cert_url="https://example.com/cert",
-    #     client_secret="secret123",
-    #     redirect_uri="https://example.com/redirect"
-    # )
+    user_gcal1 = UserGCAL(
+        account_id=1,  # Use the account_id from user1
+        username="john_doe",
+        token=john_doe['token'],
+        refresh_token=john_doe['refresh_token'],
+        token_uri=john_doe['token_uri'],
+        client_id=john_doe['client_id'],
+        client_secret=john_doe['client_secret'],
+        scopes=john_doe['scopes']
+    )
+
+    user_gcal2 = UserGCAL(
+        account_id=2,  # Use the account_id from user1
+        username="jane_smith",
+        token=jane_smith['token'],
+        refresh_token=jane_smith['refresh_token'],
+        token_uri=jane_smith['token_uri'],
+        client_id=jane_smith['client_id'],
+        client_secret=jane_smith['client_secret'],
+        scopes=jane_smith['scopes']
+    )
 
     # user_gcal2 = UserGCAL(
     #     account_id=user2.account_id,  # Use the account_id from user2
@@ -1227,9 +1252,9 @@ def insert_dummy_data():
     )
 
     # Add and commit all the dummy data to the database
-    # db.session.add(user_gcal1)
-    # print("3")
-    # db.session.add(user_gcal2)
+    db.session.add(user_gcal1)
+    print("3")
+    db.session.add(user_gcal2)
     print("4")
     db.session.add(group1)
     print("5")

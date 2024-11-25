@@ -19,6 +19,7 @@ function LoginPage() {
   const [password2, setPassword2] = useState('');
   const [email, setEmail] = useState('');
 
+  sessionStorage.setItem('gcalLinked', false);
 
 
 

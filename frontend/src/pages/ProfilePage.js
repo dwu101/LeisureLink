@@ -14,7 +14,7 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
   const [gcalLinked, setGcalLinked] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const navigate = useNavigate();
 
 
@@ -64,8 +64,11 @@ const ProfilePage = () => {
       
         if (resultLink[1] === true) {
           setGcalLinked(true);
+          sessionStorage.setItem('gcalLinked', true)
         } else {
           setGcalLinked(false);
+          sessionStorage.setItem('gcalLinked', false)
+
         }
       } catch (err) {
         setError('Error connecting to server');
@@ -165,6 +168,7 @@ const ProfilePage = () => {
           <button
             status={profile.status}
             onClick={handleToggle}
+            style={{fontSize:"15px"}}
           >{profile.status==="Active" ? "Click to become Inactive" : "Click to become Active"}</button>
 
           <InfoField 
@@ -180,11 +184,15 @@ const ProfilePage = () => {
             <div>
             <InfoField label="Calendar" value={"Google Calendar is Linked!"} />
 
-            <Link to="/AddEvent">
-              <button>
-                  Create an Event!
-              </button>
-            </Link>
+            <div className="button-container">
+
+                <Link to="/AddEvent">
+                  <button style={{marginTop: "10px", fontSize: "15px"}}>
+                      Create an Event!
+                  </button>
+                </Link>
+            </div>
+
           </div>
           )}
           {!gcalLinked && (
@@ -201,14 +209,23 @@ const ProfilePage = () => {
         <div className="button-container">
           
           <Link to="/GoogleAuth">
-          <button style={{marginTop:"20px"}}>Link/Change GCal</button>
+          <button style={{marginTop: "10px", fontSize: "15px"}}>Link/Change GCal</button>
           </Link>
         </div>
 
 
         <div style={{marginTop: "30px"}}>
-            <InfoField label="Interests"/>
-            <StyledTagsDisplay tags={profile?.tags} />
+            {profile.tags.length > 0 ? (
+              <div>
+              <InfoField label="Interests"/>
+              
+              <StyledTagsDisplay tags={profile?.tags} />
+              </div>
+            ) :
+            (
+              <InfoField label="Interests" value={"None"}/>
+
+            )}
             
           </div>
 
@@ -230,6 +247,7 @@ const ProfilePage = () => {
               <button 
                 onClick={() => navigate('/EditGroups')}
                 className="create-group-btn"
+                style={{fontSize:"18px"}}
               >
                 Edit Groups and Members
               </button>
