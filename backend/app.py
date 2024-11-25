@@ -1064,7 +1064,7 @@ def add_event():
         # If there are conflicts, return error with conflicting users
         if conflicts:
             return jsonify({
-                'error': 'There is a Calendar Conflict',
+                'error': 'There is a Calendar Conflict for users invited (potentially you)',
                 'conflicting_users': conflicts
             }), 409
         
