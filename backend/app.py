@@ -279,14 +279,6 @@ SCOPES = [
     'https://www.googleapis.com/auth/userinfo.profile',
     'openid'
 ]
-#Basic endpoint for the profile page, assuming that all of the information for the profile page will be in a database
-@app.route('/api/projects', methods=['GET'])
-def get_projects():
-    return jsonify({
-        'success': True,
-        #'data': sample_data
-    })
-
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -907,16 +899,6 @@ def get_user_friends(username):
 
 
 
-
-
-
-
-
-
-
-
-
-
 @app.route('/authorize')
 def authorize():
     state = secrets.token_urlsafe(32)
@@ -1014,25 +996,8 @@ def check_cred():
 
 @app.route('/addEvent', methods=['POST'])
 def add_event():
-    # curr = cookies[session['state']]
     try:
-        # print("A")
-        # if 'state' not in session:
-        #     return jsonify({'error': 'Not authenticated'}), 401
-
-        # credentials = Credentials(
-        #     token=curr['token'],
-        #     refresh_token=curr['refresh_token'],
-        #     token_uri=curr['token_uri'],
-        #     client_id=curr['client_id'],
-        #     client_secret=curr['client_secret'],
-        #     scopes=curr['scopes']
-        # )
-
-        # service = build('calendar', 'v3', credentials=credentials)
-        # print("B")
         data = request.json
-        print(data)
         
         event = {
             'summary': data['summary'],
@@ -1046,7 +1011,23 @@ def add_event():
                 'timeZone': 'UTC',
             },
         }
+        
+        def check_calendar_conflicts(service, start_time, end_time):
+            events_result = service.events().list(
+                calendarId='primary',
+                timeMin=start_time,
+                timeMax=end_time,
+                singleEvents=True,
+                orderBy='startTime'
+            ).execute()
+            
+            events = events_result.get('items', [])
+            return len(events) > 0
+        
         friends = data['friends']
+        conflicts = []
+        
+        # Check for conflicts for each friend
         for friend in friends:
             friend_creds = UserGCAL.query.filter_by(username=friend).first()
             
@@ -1057,14 +1038,55 @@ def add_event():
                     token_uri=friend_creds.token_uri,
                     client_id=friend_creds.client_id,
                     client_secret=friend_creds.client_secret,
-                    scopes=friend_creds.scopes
+                    scopes=SCOPES  # Using the full SCOPES list
+                )
+                
+                try:
+                    friend_service = build('calendar', 'v3', credentials=friend_credentials)
+                    
+                    # Check for conflicts
+                    has_conflict = check_calendar_conflicts(
+                        friend_service,
+                        data['startDateTime'],
+                        data['endDateTime']
+                    )
+                    
+                    if has_conflict:
+                        conflicts.append(friend)
+                        
+                except Exception as e:
+                    print(f"Error checking calendar for {friend}: {str(e)}")
+                    return jsonify({
+                        'error': f'Failed to access calendar for user {friend}',
+                        'details': str(e)
+                    }), 500
+        
+        # If there are conflicts, return error with conflicting users
+        if conflicts:
+            return jsonify({
+                'error': 'There is a Calendar Conflict',
+                'conflicting_users': conflicts
+            }), 409
+        
+        # If no conflicts, proceed with adding the event
+        for friend in friends:
+            friend_creds = UserGCAL.query.filter_by(username=friend).first()
+            
+            if friend_creds:
+                friend_credentials = Credentials(
+                    token=friend_creds.token,
+                    refresh_token=friend_creds.refresh_token,
+                    token_uri=friend_creds.token_uri,
+                    client_id=friend_creds.client_id,
+                    client_secret=friend_creds.client_secret,
+                    scopes=SCOPES  # Using the full SCOPES list
                 )
                 
                 friend_service = build('calendar', 'v3', credentials=friend_credentials)
-                
                 friend_service.events().insert(calendarId='primary', body=event).execute()
 
         return jsonify({'success': True})
+    
     except Exception as e:
         print(e)
         return jsonify({'error': str(e)}), 500
