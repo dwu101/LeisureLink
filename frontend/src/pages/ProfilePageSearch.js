@@ -4,6 +4,7 @@ import Sidebar from '../components/SideBar';
 import ProfileIcon from '../components/ProfileIcon';
 import { useLocation, useParams } from 'react-router-dom';  
 import Alert from '../components/Alert';
+import StyledTagsDisplay from '../components/StyledTagsDisplay';
 
  
 
@@ -164,33 +165,15 @@ const ProfilePageSearch = () => {
             label="Bio" 
             value={profile?.bio || 'None...'} 
           />
+
+          <div style={{marginTop: "30px"}}>
+            <InfoField label="Interests"/>
+            <StyledTagsDisplay tags={profile?.tags} />
+          </div>
           
          
         </div>
 
-        
-
-      
-{/* 
-        {!gcalLinked && (
-          <div className="button-container">
-            Gcal is not Linked
-          </div>
-        )} */}
-
-        {/* <div className="button-container">
-          
-          <Link to="/GoogleAuth">
-          <button style={{marginTop:"20px"}}>Link/Change GCal</button>
-          </Link>
-        </div> */}
-
-        {/* <div className="button-container"> */}
-          
-          {/* <Link to="/EditProfile"> */}
-          {/* <button onClick= {() => setIsOpen(!isOpen)} style={{marginTop:"50px", fontSize: "20px"}}>All Actions!</button> */}
-          {/* </Link> */}
-        {/* </div> */}
       </aside>
 
       <main className="profile-main">
@@ -217,7 +200,7 @@ const ProfilePageSearch = () => {
   );
 };
 
-const InfoField = ({ label, value }) => (
+const InfoField = ({ label, value=null }) => (
   <div className="info-field">
     <label>{label}</label>
     <p>{value}</p>

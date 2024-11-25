@@ -5,6 +5,7 @@ import ProfileIcon from "../components/ProfileIcon";
 import React, { useState, useEffect } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import NavigationPrompt from '../components/NavigationPrompt';
+import Sidebar from "../components/SideBar";
 
 
 const SeeGroup = () => {
@@ -212,7 +213,9 @@ const SeeGroup = () => {
   return (
     <div className="body">
       <div className="main-box">
-        <ProfileIcon/>
+        <ProfileIcon onClickFunc={handleNavigation}/>
+        <Sidebar onClickFunc={handleNavigation}/>
+
         <h2 className="main-box-title">{group} </h2>
         
         {loading && <div>Loading...</div>}

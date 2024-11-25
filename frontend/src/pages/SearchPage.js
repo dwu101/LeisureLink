@@ -21,8 +21,8 @@ const SearchIcon = () => (
   </svg>
 );
 
-const SearchInterface = () => {
-  const navigate = useNavigate()
+const SearchInterface = ({ creatingGroup = false, selectedFriends = [], onFriendToggle }) => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchBy, setSearchBy] = useState('username');
   const [results, setResults] = useState([]);
@@ -31,14 +31,12 @@ const SearchInterface = () => {
   const [buttonClicked, setButtonClicked] = useState(false);
 
   const handleSearch = async () => {
-    
     if (!searchQuery.trim()) {
-        handleClear();
+      handleClear();
       setError('Please enter a search term');
-      
       return;
     }
-    setButtonClicked(true)
+    setButtonClicked(true);
     setLoading(true);
     setError('');
 
@@ -55,21 +53,14 @@ const SearchInterface = () => {
       });
       
       if (!response.ok) {
-        console.log("!!!!!")
         throw new Error('Search failed');
-      }
-      else{
-        console.log(response.json)
+      } else {
         const data = await response.json();
-        setResults(Array.isArray(data) ? data : []);console.log(results)
+        setResults(Array.isArray(data) ? data : []);
         if (Array.isArray(data) && data.length === 0) {
           setError('No results found');
         }
-        
       }
-
-      
-      
     } catch (err) {
       setError('Failed to fetch results. Please try again.');
       console.error('Search error:', err);
@@ -79,16 +70,14 @@ const SearchInterface = () => {
   };
 
   const handleKeyPress = (e) => {
-    
     if (e.key === 'Enter') {
-    setButtonClicked(true)
+      setButtonClicked(true);
       handleSearch();
     }
   };
 
   const handleClear = () => {
-    setButtonClicked(false)
-
+    setButtonClicked(false);
     setSearchQuery('');
     setResults([]);
     setError('');
@@ -108,83 +97,101 @@ const SearchInterface = () => {
   };
 
   const handleClick = (username) => {
-    console.log("Clicked user:", username);
-    navigate('/ProfilePageSearch', { state: { username: username } });
-
-};
+    if (!creatingGroup) {
+      navigate('/ProfilePageSearch', { state: { username: username } });
+    }
+  };
 
   return (
-    <div className = "body">
+    <div className="body">
+      <div className="main-box">
+        <ProfileIcon/>
+        <h2 className="main-box-title">User Search</h2>
+        
+        <div className="namesearch-section">
+          <input
+            className="name-search-box"
+            type="text"
+            placeholder={getSearchPlaceholder()}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyPress={handleKeyPress}
+          />
+          <button 
+            className="search-button"
+            onClick={handleSearch}
+            disabled={loading}
+          >
+            {loading ? <div>↻</div> : <><SearchIcon /> Search</>}
+          </button>
+          {searchQuery && (
+            <button onClick={handleClear}>Clear</button>
+          )}
+        </div>
       
-    <div className="main-box">
-    <ProfileIcon/>
-      <h2 className="main-box-title">User Search</h2>
+        <div className="filter-selections">
+          {['username', 'displayName', 'group'].map((option) => (
+            <label key={option}>
+              <input
+                type="radio"
+                value={option}
+                checked={searchBy === option}
+                onChange={(e) => setSearchBy(e.target.value)}
+              />
+              <span>
+                {option === 'displayName' ? 'Display Name' : 
+                 option === 'group' ? 'Group Name' : 'Username'}
+              </span>
+            </label>
+          ))}
+        </div>
       
-      {/* Search Input */}
-      <div className="namesearch-section">
-      <input
-        className="name-search-box"
-        type="text"
-        placeholder={getSearchPlaceholder()}
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        onKeyPress={handleKeyPress}
-      />
-      <button className="search-button"
-        onClick={handleSearch}
-        disabled={loading}
-      >
-        {loading ? <div>↻</div> : <><SearchIcon /> Search</>}
-      </button>
-      {searchQuery && (
-        <button onClick={handleClear}>Clear</button>
-      )}
-      </div>
-    
-      {/* Search Options */}
-      <div className="filter-selections">
-      {['username', 'displayName', 'group'].map((option) => (
-        <label key={option}>
-        <input
-          type="radio"
-          value={option}
-          checked={searchBy === option}
-          onChange={(e) => setSearchBy(e.target.value)}
-        />
-        <span>
-          {option === 'displayName' ? 'Display Name' : 
-           option === 'group' ? 'Group Name' : 'Username'}
-        </span>
-        </label>
-      ))}
-      </div>
-    
-      {/* Error Message */}
-      {error && <div>{error}</div>}
-    
-      {/* Search Results */}
-      {(buttonClicked && !error) && (
-      <div style={{marginTop: "50px"}}>
-        <h2>Found {results.length} result{results.length !== 1 ? 's' : ''}</h2>
-      </div>
-      )}
-    
-      <div>
-      <div className="search-results">
-        {results.map((result, index) => (
-          <div key={index} className="result-item" onClick={ () => handleClick(result.username)}>
-            <span className="user-icon">👤</span>
-            <span className="display-name">{result.displayName}</span>
-            <span className="username">@{result.username}</span>
-            <span className="status" style={{marginLeft: "50px"}}>{result.status}</span>
-            </div>
-        ))}
-</div>
+        {error && <div>{error}</div>}
+      
+        {(buttonClicked && !error) && (
+          <div style={{marginTop: "50px"}}>
+            <h2>Found {results.length} result{results.length !== 1 ? 's' : ''}</h2>
+          </div>
+        )}
+      
+        <div>
+          <div className="search-results">
+            {results.map((result, index) => (
+              <div 
+                key={index} 
+                className="result-item" 
+                onClick={() => !creatingGroup && handleClick(result.username)}
+                style={{ cursor: creatingGroup ? 'default' : 'pointer' }}
+              >
+                <div className="user-info-container" style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                  <span className="user-icon">👤</span>
+                  <span className="display-name">{result.displayName}</span>
+                  <span className="username">@{result.username}</span>
+                  <span className="status" style={{marginLeft: "50px"}}>{result.status}</span>
+                </div>
+                {creatingGroup && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onFriendToggle(result.username);
+                    }}
+                    className="search-button"
+                    style={{
+                      marginLeft: '10px',
+                      backgroundColor: selectedFriends.includes(result.username) ? '#ef4444' : '#3b82f6',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                  >
+                    {selectedFriends.includes(result.username) ? 'Remove' : 'Add to Group'}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
-    </div>
-    );
-    
+  );
 };
 
 export default SearchInterface;

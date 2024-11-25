@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from '../components/SideBar';
 import Alert from '../components/Alert';
-import { useNavigate,useBeforeUnload  } from 'react-router-dom';
+import { useNavigate  } from 'react-router-dom';
 import ProfileIcon from "../components/ProfileIcon";
 import NavigationPrompt from '../components/NavigationPrompt';
+import SearchInterface from './SearchPage';
 
 
 const EditGroups = () => {
@@ -29,9 +30,8 @@ const EditGroups = () => {
 
   const [showPrompt, setShowPrompt] = useState(false);
   const [navPath, setNavPath] = useState('');
-  // const [navDestination, setNavDestination] = useState({ path: '', state: null });
 
-
+  const [addNonFriend, setaddNonFriend] = useState(false);
   useEffect(() => {
     const handlePopState = (event) => {
       if (hasChanges) {
@@ -56,7 +56,7 @@ const EditGroups = () => {
   useEffect(() => {
     const unsavedChanges = newGroupName.trim() !== '' || selectedFriends.length >= 2 || removedGroups.length >= 1;
     setHasChanges(unsavedChanges);
-  }, [newGroupName, selectedFriends]);
+  }, [newGroupName, selectedFriends, removedGroups.length]);
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
@@ -272,10 +272,12 @@ const EditGroups = () => {
         message={alertMessage}
         onClose={() => setShowAlert(false)}
       />
-      <Sidebar isOpen={isOpen} setIsOpen={setIsOpen}/>
+      <Sidebar isOpen={isOpen} setIsOpen={setIsOpen} onClickFunc={handleNavigation}/>
       
       <div className="main-box">
-        <ProfileIcon/>
+       
+        <ProfileIcon onClickFunc={handleNavigation}/>
+       
          {/* Your Groups Section with Updated Button Format */}
          <div className="section-box">
           <div className="flex items-center justify-between mb-4">
@@ -360,7 +362,8 @@ const EditGroups = () => {
         
         {/* Add Group Section */}
         <div ref={addGroupRef} className="section-box" style={{ marginTop: '50px' }}>
-          <h2 className="main-box-title">Create a Group!</h2>
+          <h2 className="main-box-title">Create a Group!
+          </h2>
           <form onSubmit={handleAddGroup} className="add-group-form">
             <div className="form-group">
               <input
@@ -374,7 +377,19 @@ const EditGroups = () => {
             
             {/* Friends List Section with Updated Button Styling */}
             <div className="mt-4">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Add Friends to the group</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Add Friends to the group
+
+              <button
+                className="search-button"
+                style={{marginLeft: "425px", height:"30px", marginTop: "0px", width: "143px", textAlign: "center"}}
+                onClick={() => setaddNonFriend(true)}
+                type="button"
+              >
+                Add a Non-Friend
+              </button>
+
+                
+              </h3>
               {friendsLoading && <div className="text-gray-500">Loading friends...</div>}
               {friendsError && <div className="text-red-500">{friendsError}</div>}
               <div className="space-y-2">
@@ -401,7 +416,7 @@ const EditGroups = () => {
                           marginLeft:"50px"
                         }}
                       >
-                        {selectedFriends.includes(friend.username) ? 'Remove Friend' : 'Add Friend'}
+                        {selectedFriends.includes(friend.username) ? 'Remove' : 'Add'}
                       </button>
                       </div>
                       
@@ -419,7 +434,18 @@ const EditGroups = () => {
             </button>
           </form>
         </div>
+        {addNonFriend &&
+          <div className="section-box" style={{ marginTop: '20px' }}>
+            <SearchInterface 
+                creatingGroup={true}
+                selectedFriends={selectedFriends}
+                onFriendToggle={handleFriendToggle}
+              />
+          </div>
+        }
       </div>
+    
+    
 
       <NavigationPrompt
   when={showPrompt}

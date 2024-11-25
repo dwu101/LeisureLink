@@ -3,7 +3,7 @@ import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import Alert from './Alert';
 
-const ProfilePictureUpload = () => {
+const ProfilePictureUpload = ({setIsChanged}) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [imgSrc, setImgSrc] = useState(null);
   const [crop, setCrop] = useState();
@@ -46,6 +46,7 @@ const ProfilePictureUpload = () => {
         setImgSrc(reader.result);
         setCrop(undefined);
         setCroppedImage(null);
+        setIsChanged(true);
       });
       reader.readAsDataURL(file);
     }
@@ -162,6 +163,7 @@ const ProfilePictureUpload = () => {
         throw new Error(errorData.error || 'Upload failed');
       }
       setConfirmed(true);
+      setIsChanged(false);
 
       const data = await uploadResponse.json();
       console.log('Upload successful. Image path:', data.imagePath);
@@ -187,10 +189,7 @@ const ProfilePictureUpload = () => {
   
       const data2 = await response2.json();
       return data2;
-      // } catch (error) {
-        // console.error('Error updating profile picture:', error);
-        // throw error;
-      // }
+
       
       
 
@@ -315,11 +314,11 @@ const ProfilePictureUpload = () => {
                 disabled={uploading}
                 className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
-                {uploading ? 'Uploading...' : 'Confirm'}
+                {uploading ? 'Uploading...' : 'Confirm and Update'}
               </button>
             }
             {confirmed &&
-              <p>New Profile Pic Confirmed. </p>
+              <p>New Profile Pic Updated! </p>
             }
           </div>
         </div>

@@ -1,8 +1,9 @@
 import './ProfilePage.css';
 import React, { useState, useEffect} from 'react';
 import Sidebar from '../components/SideBar';
+import StyledTagsDisplay from '../components/StyledTagsDisplay';
 
-import { Link, useParams, useLocation, Navigate, useNavigate } from 'react-router-dom';  
+import { Link, useNavigate } from 'react-router-dom';  
 
  
 
@@ -128,17 +129,17 @@ const ProfilePage = () => {
     return <div>Error: {error}</div>;
   }
 
-  const handleGroupClick = (group) => {
-    // Navigate to group page or handle group click
-    console.log('Group clicked:', group);
-    // Example: navigate(`/group/${group}`);
-  };
+  // const handleGroupClick = (group) => {
+  //   // Navigate to group page or handle group click
+  //   console.log('Group clicked:', group);
+  //   // Example: navigate(`/group/${group}`);
+  // };
 
-  const handleCreateGroup = () => {
-    // Handle create group action
-    console.log('Create group clicked');
-    // Example: navigate('/create-group');
-  };
+  // const handleCreateGroup = () => {
+  //   // Handle create group action
+  //   console.log('Create group clicked');
+  //   // Example: navigate('/create-group');
+  // };
 
   return (
     <div>
@@ -170,6 +171,11 @@ const ProfilePage = () => {
             label="Bio" 
             value={profile?.bio || 'None...'} 
           />
+
+
+
+          
+
           {gcalLinked && (
             <div>
             <InfoField label="Calendar" value={"Google Calendar is Linked!"} />
@@ -189,14 +195,8 @@ const ProfilePage = () => {
         </div>
 
         
+        
 
-      
-{/* 
-        {!gcalLinked && (
-          <div className="button-container">
-            Gcal is not Linked
-          </div>
-        )} */}
 
         <div className="button-container">
           
@@ -204,6 +204,16 @@ const ProfilePage = () => {
           <button style={{marginTop:"20px"}}>Link/Change GCal</button>
           </Link>
         </div>
+
+
+        <div style={{marginTop: "30px"}}>
+            <InfoField label="Interests"/>
+            <StyledTagsDisplay tags={profile?.tags} />
+            
+          </div>
+
+
+
 
         <div className="button-container">
           
@@ -264,7 +274,7 @@ const ProfilePage = () => {
   );
 };
 
-const InfoField = ({ label, value }) => (
+const InfoField = ({ label, value=null }) => (
   <div className="info-field">
     <label>{label}</label>
     <p>{value}</p>

@@ -29,6 +29,49 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+going_out = [
+    "Bars",
+    "Cafe-hopping",
+    "Clubs",
+    "Concerts",
+    "Festivals",
+    "Karaoke",
+    "Museums & galleries",
+    "Stand up",
+    "Theater"
+]
+
+activities = [
+    "Gym",
+    "Badminton", 
+    "Baseball",
+    "Basketball",
+    "Bouldering",
+    "Volleyball",
+    "Boxing",
+    "Football",
+    "Soccer",
+    "Yoga"
+]
+
+staying_in = [
+    "Reading",
+    "Video games",
+    "Board games",
+    "Cooking",
+    "Baking",
+    "Meditation",
+    "Puzzle solving",
+    "Movie watching",
+    "TV binge watching",
+    "Knitting",
+    "Podcasts",
+    "Journaling",
+    "Scrapbooking",
+    "DIY projects",
+    "Online shopping",
+]
+
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -47,8 +90,10 @@ class User(db.Model):
     groups=db.Column(db.ARRAY(db.String(100)))
     pfp_link=db.Column(db.String(100))
     friends = db.Column(db.ARRAY(db.String(100)))
+    tags = db.Column(db.ARRAY(db.String(100))) 
 
-    def __init__(self,account_id, username,password,email,bio,display_name,status,groups,pfp_link,friends):
+
+    def __init__(self,account_id, username,password,email,bio,display_name,status,groups,pfp_link,friends, tags):
         self.account_id = account_id
         self.username=username
         self.password=password
@@ -59,6 +104,7 @@ class User(db.Model):
         self.groups=groups
         self.pfp_link=pfp_link
         self.friends = friends if friends is not None else []
+        self.tags = tags if tags is not None else []
 
 class UserGCAL(db.Model):
     __tablename__='UserGCal'
@@ -163,6 +209,10 @@ def get_groups(username):
 def get_pfp_link(username):
     user = get_user_by_username(username)
     return user.pfp_link if user else "/profile-pictures/defaultpfp.png"
+
+def get_tags(username):
+    user = get_user_by_username(username)
+    return user.tags if user else "None"
 
 def add_friend(current_user, friend_username):
     current_user_obj = get_user_by_username(current_user)
@@ -282,7 +332,8 @@ def get_profile():
         "display_name": get_display_name(username),
         "status": get_status(username),
         "groups": get_groups(username),
-        "pfp_link": get_pfp_link(username)
+        "pfp_link": get_pfp_link(username),
+        "tags": get_tags(username)
     }
     # print(profile)
     if all(value is not None for value in profile.values()):
@@ -290,6 +341,49 @@ def get_profile():
         return jsonify({"success": True, "profile": profile})
     else:
         return jsonify({"success": False, "message": "User not found"}), 404
+    
+@app.route('/updateTags', methods=['POST'])
+def update_user_tags():
+   try:
+       data = request.get_json()
+       
+       # Check if required fields are present
+       if not data or 'username' not in data or 'tags' not in data:
+           return jsonify({
+               'success': False,
+               'message': 'Missing required fields: username and tags'
+           }), 400
+           
+       username = data['username']
+       new_tags = data['tags']
+       
+       if not isinstance(new_tags, list):
+           return jsonify({
+               'success': False,
+               'message': 'Tags must be an array'
+           }), 400
+           
+       user = get_user_by_username(username)
+       if not user:
+           return jsonify({
+               'success': False,
+               'message': f'User {username} not found'
+           }), 404
+           
+       user.tags = new_tags
+       db.session.commit()
+       
+       return jsonify({
+           'success': True,
+           'message': 'Tags updated successfully',
+           'tags': user.tags
+       }), 200
+    
+   except Exception as e:
+       return jsonify({
+           'success': False,
+           'message': f'Server error: {str(e)}'
+       }), 500
 
 @app.route('/addGroup', methods=['POST'])
 def add_group():
@@ -1054,7 +1148,8 @@ def insert_dummy_data():
         status="Active",
         groups=["Developers", "Designers"],
         pfp_link="/profile-pictures/TESTING.jpg",
-        friends= ["jane_smith", "joanArc"]
+        friends= ["jane_smith", "joanArc"],
+        tags = [ 'Gym', 'Basketball', 'Bars', 'Clubs','Reading', 'DIY Projects',]
     )
 
     user2 = User(
@@ -1067,7 +1162,9 @@ def insert_dummy_data():
         status="Busy",
         groups=["Developers"],
         pfp_link="/profile-pictures/defaultpfp.png",
-        friends= ["john_doe"]
+        friends= ["john_doe"],
+        tags = []
+
     )
 
     user3= User(
@@ -1080,7 +1177,8 @@ def insert_dummy_data():
         status="Busy",
         groups=["Developers", "Designers"],
         pfp_link="/profile-pictures/defaultpfp.png",
-        friends= ["john_doe"]
+        friends= ["john_doe"],
+        tags = ['Cooking', 'Festivals', 'Theater']
     )
 
     # Add users to the session and commit to generate account_ids

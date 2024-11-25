@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import './Sidebar.css';
 import Alert from './Alert';
 
-const Sidebar = ({isOpen: propIsOpen, setIsOpen: propSetIsOpen}) => {
+const Sidebar = ({isOpen: propIsOpen, setIsOpen: propSetIsOpen, onClickFunc = null}) => {
   // const [isOpen, setIsOpen] = useState(false);
 
   const [internalIsOpen, internalSetIsOpen] = useState(false);
@@ -73,28 +73,58 @@ const Sidebar = ({isOpen: propIsOpen, setIsOpen: propSetIsOpen}) => {
       </div>
 
       {/* Sidebar */}
+      {!onClickFunc ? (
       
       <div className={`sidebar ${isOpen ? 'show' : ''}`}>
+
         <ul>
+         
         <li style={{ marginTop: '40px' }}>
-            <Link to="/Home" onClick={toggleSidebar}>Home</Link>
-          </li>
-          <li>
-            <Link to="/EditProfile" onClick={toggleSidebar}>Edit Your Profile</Link>
-          </li>
-          <li>
-            <Link to="/services" onClick={toggleSidebar}>Services</Link>
-          </li>
+        <Link to="/EditProfile" onClick={toggleSidebar}>Edit Your Profile</Link>
+        </li>
+         
+         
 
           <li>
             <Link to="/SearchPage" onClick={toggleSidebar}>Search</Link>
+          </li>
+
+          <li>
+            <Link to="/EditGroups" onClick={toggleSidebar}>Edit Groups</Link>
           </li>
           
           <li style={{marginTop:"50px",cursor: "pointer"}} onClick={logOut}>
              Sign Out
           </li>
         </ul>
+
       </div>
+      ) : (
+      <div className={`sidebar ${isOpen ? 'show' : ''}`}>
+
+        <ul>
+ 
+          <li style={{marginTop:"40px", cursor:"pointer"}} onClick={() => onClickFunc('/EditProfile')}>Edit Your Profile
+          </li>
+
+          <li style={{cursor:"pointer"}}onClick={() => onClickFunc('/SearchPage')}>Search
+          </li>
+
+          <li style={{cursor:"pointer"}}onClick={() => onClickFunc('/EditGroups')}>Search
+          </li>
+
+
+        
+          <li style={{marginTop:"50px",cursor: "pointer"}} onClick={logOut}>
+             Sign Out
+          </li>
+        </ul>
+
+      </div>
+  )}
+
+
+
     </div>
     </div>
   );
