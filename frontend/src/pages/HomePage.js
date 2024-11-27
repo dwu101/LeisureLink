@@ -96,9 +96,9 @@ function LoginPage() {
           setMessage(response.data.message);
           sessionStorage.setItem('username', username);
           sessionStorage.setItem('pfp_link',"/profile-pictures/defaultpfp.png")
-          if (response.ok){
-            navigate("/ProfilePage");
-          }
+          
+          navigate("/ProfilePage");
+          
         } catch (error) {
           setMessage(error.response?.data?.error || "Signup failed. Please try again.");
         }
@@ -136,9 +136,9 @@ function LoginPage() {
 
 
       <div className="infobox">
-      <h1>Welcome to LeisureLink!</h1>
-      <p>LeisureLink is a social networking platform that allows users to expand their group of friends by finding those with similar interests. It will provide a seamless way to find optimal times to schedule events or gatherings within a group. All the features will be available and easily accessible from our website.</p>
-      <p>By: Daniel Wu, Nick Pham,<br></br> Srikar Puri, and Lucas Eng</p>
+      <h1 >Welcome to LeisureLink!</h1>
+      <p style={{fontSize:"20px"}}>LeisureLink is a social networking platform that allows users to expand their group of friends by finding those with similar interests. It will provide a seamless way to find optimal times to schedule events or gatherings within a group. All the features will be available and easily accessible from our website.</p>
+      <p style={{fontSize:"20px"}}>By: Daniel Wu, Nick Pham,<br></br> Srikar Puri, and Lucas Eng</p>
       </div>
       <div className="signinbox">
 

@@ -211,14 +211,15 @@ function EditProfile() {
           messages.push('Successfully changed Name');
           }
         }
-
-        await axios.post('/updateTags', { username: username , tags: updatedData.newTags });
-          if (messages.length){
-            messages.push(", Tags")
-          }
-          else{
-          messages.push('Successfully changed Tags');
-          }
+        if (selectedTags !== originalTags){
+          await axios.post('/updateTags', { username: username , tags: updatedData.newTags });
+            if (messages.length){
+              messages.push(", Tags")
+            }
+            else{
+            messages.push('Successfully changed Tags');
+            }
+        }
 
 
         setHasChanges(false);
@@ -359,7 +360,8 @@ function EditProfile() {
     <div className="profile-container">
       
 
-      <aside className="profile-sidebar relative flex flex-col h-full">
+      <aside className="profile-sidebar relative flex flex-col h-full"  style={{backgroundColor: "#e0e0e0"}}
+      >
         <div className="profile-image-container">
           <img 
             src={profile?.pfp_link || "/profile-pictures/defaultpfp.png"} 

@@ -227,7 +227,8 @@ const AddEvent = () => {
       <div className="main-box">
         <ProfileIcon onClickFunc={handleNavigation}/>
         
-        <div className="section-box">
+        <div className="section-box"   style={{backgroundColor: "#e0e0e0"}}
+        >
           <h1 className="main-box-title">Add Calendar Event</h1>
           
           <form onSubmit={handleSubmit} className="mt-4">

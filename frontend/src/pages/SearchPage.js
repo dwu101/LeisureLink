@@ -21,7 +21,7 @@ const SearchIcon = () => (
   </svg>
 );
 
-const SearchInterface = ({ creatingGroup = false, selectedFriends = [], onFriendToggle }) => {
+const SearchInterface = ({ creatingGroup = false, selectedFriends = [], onFriendToggle, displayIcon = true}) => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchBy, setSearchBy] = useState('username');
@@ -104,8 +104,11 @@ const SearchInterface = ({ creatingGroup = false, selectedFriends = [], onFriend
 
   return (
     <div className="body">
-      <div className="main-box">
+      <div className="main-box"   style={{backgroundColor: "#e0e0e0"}}
+      >
+        {displayIcon &&
         <ProfileIcon/>
+        }
         <h2 className="main-box-title">User Search</h2>
         
         <div className="namesearch-section">
@@ -130,7 +133,7 @@ const SearchInterface = ({ creatingGroup = false, selectedFriends = [], onFriend
         </div>
       
         <div className="filter-selections">
-          {['username', 'displayName', 'group'].map((option) => (
+          {['username', 'displayName'].map((option) => (
             <label key={option}>
               <input
                 type="radio"

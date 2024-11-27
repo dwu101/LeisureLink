@@ -32,35 +32,39 @@ const EditGroups = () => {
   const [navPath, setNavPath] = useState('');
 
   const [addNonFriend, setaddNonFriend] = useState(false);
+
+
   useEffect(() => {
     const handlePopState = (event) => {
-      if (hasChanges) {
+      if (hasChanges) {  // Check both conditions
         event.preventDefault();
-        
         const currentUrl = window.location.href;
-        
         setNavPath(event.target.location.pathname);
         setShowPrompt(true);
-        
         window.history.pushState(null, '', currentUrl);
       }
     };
   
     window.addEventListener('popstate', handlePopState);
-  
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [hasChanges]);
+  }, [hasChanges]);  // Add addNonFriend as dependency
 
   useEffect(() => {
-    const unsavedChanges = newGroupName.trim() !== '' || selectedFriends.length >= 2 || removedGroups.length >= 1;
+    // console.log("addNonFriend value in effect:", addNonFriend);
+    const unsavedChanges = newGroupName.trim() !== '' || 
+                          selectedFriends.length >= 2 || 
+                          removedGroups.length >= 1;
+                          // addNonFriend; 
+    console.log("unsavedChanges calculated as:", unsavedChanges);
     setHasChanges(unsavedChanges);
-  }, [newGroupName, selectedFriends, removedGroups.length]);
+}, [newGroupName, selectedFriends, removedGroups.length]); 
+
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
-      if (hasChanges) {
+      if (hasChanges ) {
         e.preventDefault();
         e.returnValue = '';
       }
@@ -74,13 +78,13 @@ const EditGroups = () => {
   }, [hasChanges]);
 
   useEffect(() => {
-    if (hasChanges) {
+    if (hasChanges) {  // Check both conditions
       window.history.pushState(null, '', window.location.href);
     }
   }, [hasChanges]);
 
   const handleNavigation = (path) => {
-    if (hasChanges) {
+    if (hasChanges) { // Check both conditions
       setNavPath(path);
       setShowPrompt(true);
     } else {
@@ -96,6 +100,7 @@ const EditGroups = () => {
   const handleLeave = () => {
     setShowPrompt(false);
     setHasChanges(false);
+    setaddNonFriend(false); // Reset search interface state
     
     if (navPath) {
       navigate(navPath);
@@ -174,6 +179,14 @@ const EditGroups = () => {
     });
   };
 
+  const handleCloseSearch = () => {
+    setaddNonFriend(false);
+    // Only reset hasChanges if there are no other changes
+    if (!newGroupName.trim() && selectedFriends.length < 2 && removedGroups.length < 1) {
+      setHasChanges(false);
+    }
+  };
+
   const handleSaveChanges = async () => {
     try {
       const response = await fetch('/deleteGroup', {
@@ -245,7 +258,7 @@ const EditGroups = () => {
           groups: [...(prev.groups || []), newGroupName]
         }));
         setNewGroupName('');
-        setSelectedFriends([]); // Reset selected friends after successful group creation
+        setSelectedFriends([username]); // Reset selected friends after successful group creation
         setAlertMessage("Group Added Successfully");
         setAlertType("success");
         setShowAlert(true);
@@ -279,7 +292,8 @@ const EditGroups = () => {
         <ProfileIcon onClickFunc={handleNavigation}/>
        
          {/* Your Groups Section with Updated Button Format */}
-         <div className="section-box">
+         <div className="section-box"   style={{backgroundColor: "#e0e0e0"}}
+         >
           <div className="flex items-center justify-between mb-4">
             <h1 className="main-box-title">Your Groups
               <button
@@ -361,7 +375,7 @@ const EditGroups = () => {
         {/* Previous sections remain the same... */}
         
         {/* Add Group Section */}
-        <div ref={addGroupRef} className="section-box" style={{ marginTop: '50px' }}>
+        <div ref={addGroupRef} className="section-box" style={{ marginTop: '50px', backgroundColor: "#e0e0e0" }}>
           <h2 className="main-box-title">Create a Group!
           </h2>
           <form onSubmit={handleAddGroup} className="add-group-form">
@@ -382,7 +396,10 @@ const EditGroups = () => {
               <button
                 className="search-button"
                 style={{marginLeft: "425px", height:"30px", marginTop: "0px", width: "143px", textAlign: "center"}}
-                onClick={() => setaddNonFriend(true)}
+                onClick={() => {
+                  console.log("Button clicked, setting addNonFriend to true");
+                  setaddNonFriend(true);
+              }}
                 type="button"
               >
                 Add a Non-Friend
@@ -434,21 +451,32 @@ const EditGroups = () => {
             </button>
           </form>
         </div>
-        {addNonFriend &&
-          <div className="section-box" style={{ marginTop: '20px' }}>
-            <SearchInterface 
-                creatingGroup={true}
-                selectedFriends={selectedFriends}
-                onFriendToggle={handleFriendToggle}
-              />
-          </div>
-        }
+        {addNonFriend && (
+    <div className="section-box" style={{ marginTop: '20px' }}>
+      {/* <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+        <button
+          onClick={handleCloseSearch}
+          className="search-button"
+          style={{ backgroundColor: '#ef4444' }}
+        >
+          Close Search
+        </button>
+      </div> */}
+      <SearchInterface 
+        creatingGroup={true}
+        selectedFriends={selectedFriends}
+        onFriendToggle={handleFriendToggle}
+        displayIcon = {false}
+      />
+    </div>
+  )}
+
       </div>
     
     
 
       <NavigationPrompt
-  when={showPrompt}
+  when={showPrompt && (hasChanges)}
   message="You have unsaved changes. Are you sure you want to leave?"
   onOK={handleLeave}
   onCancel={handleStay}

@@ -153,7 +153,7 @@ def check_user_credentials(username, password):
 def create_user(username, password, email):
     try:
        
-        new_user = User(account_id=User.query.count()+1, username=username, password=password, email=email, bio="", display_name="", status="", groups=[], pfp_link="", friends= [])
+        new_user = User(account_id=User.query.count()+1, username=username, password=password, email=email, bio="", display_name="", status="Active", groups=[], pfp_link="", friends= [], tags=[])
         db.session.add(new_user)
         db.session.commit()
         return {"success": True, "message": "User created successfully."}
@@ -1185,7 +1185,7 @@ def insert_dummy_data():
         status="Active",
         groups=["Developers", "Designers"],
         pfp_link="/profile-pictures/TESTING.jpg",
-        friends= ["jane_smith", "joanArc"],
+        friends= ["jane_smith"],
         tags = [ 'Gym', 'Basketball', 'Bars', 'Clubs','Reading', 'DIY Projects',]
     )
 

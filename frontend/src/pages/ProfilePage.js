@@ -150,8 +150,8 @@ const ProfilePage = () => {
     <div className="profile-container">
       
 
-      <aside className="profile-sidebar relative flex flex-col h-full">
-        <div className="profile-image-container">
+    <aside className="profile-sidebar relative flex flex-col" style={{backgroundColor: "#e0e0e0"}}>
+             <div className="profile-image-container">
           <img 
             src={profile?.pfp_link || "/profile-pictures/defaultpfp.png"} 
             alt="Profile" 
@@ -241,7 +241,8 @@ const ProfilePage = () => {
       </aside>
 
       <main className="profile-main">
-          <div className="featured-project">
+          <div className="featured-project"   style={{backgroundColor: "#e0e0e0"}}
+          >
             <div className="groups-header">
               <h2>Groups</h2>
               <button 
