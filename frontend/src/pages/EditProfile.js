@@ -364,7 +364,7 @@ function EditProfile() {
       >
         <div className="profile-image-container">
           <img 
-            src={profile?.pfp_link || "/profile-pictures/defaultpfp.png"} 
+            src={profile?.pfp_link || "/profile-pictures/defaultpfp.jpg"} 
             alt="Profile" 
             className="profile-image" 
           />

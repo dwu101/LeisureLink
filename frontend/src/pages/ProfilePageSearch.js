@@ -127,7 +127,7 @@ const ProfilePageSearch = () => {
       <aside className="profile-sidebar relative flex flex-col h-full">
         <div className="profile-image-container">
           <img 
-            src={profile?.pfp_link || "/profile-pictures/defaultpfp.png"} 
+            src={profile?.pfp_link || "/profile-pictures/defaultpfp.jpg"} 
             alt="Profile" 
             className="profile-image" 
           />

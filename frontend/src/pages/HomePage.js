@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import './HomePage.css';  
-import { Link } from 'react-router-dom';  
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Alert from '../components/Alert';
@@ -11,13 +10,15 @@ function LoginPage() {
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [message, setMessage] = useState(''); // Add this line to define setMessage
+  const [message, setMessage] = useState('');
   const [showAlert, setShowAlert] = useState(false);
   const [alertType, setAlertType] = useState('');
   const [alertMessage, setAlertMessage] = useState('');
   const [signingUp, setSigningUp] = useState(false);
   const [password2, setPassword2] = useState('');
   const [email, setEmail] = useState('');
+  const [events, setEvents] = useState([]);
+
 
   sessionStorage.setItem('gcalLinked', false);
 
@@ -36,8 +37,10 @@ function LoginPage() {
 
 
     setShowAlert(showParam ? decodeURIComponent(showParam) : false);
-    setAlertType(typeParam ? decodeURIComponent(typeParam) : '');  // or your default type
-    setAlertMessage(messageParam ? decodeURIComponent(messageParam) : '');  // or your default message
+    setAlertType(typeParam ? decodeURIComponent(typeParam) : '');  
+    setAlertMessage(messageParam ? decodeURIComponent(messageParam) : ''); 
+    
+    
 
   }, []);
 
@@ -95,7 +98,7 @@ function LoginPage() {
           
           setMessage(response.data.message);
           sessionStorage.setItem('username', username);
-          sessionStorage.setItem('pfp_link',"/profile-pictures/defaultpfp.png")
+          sessionStorage.setItem('pfp_link',"/profile-pictures/defaultpfp.jpg")
           
           navigate("/ProfilePage");
           
@@ -198,7 +201,7 @@ function LoginPage() {
       </form>
 
       {/* <HelloWorld  names={namesArray} /> */}
-      {/* {message && <p>{message}</p>} */}
+      {message && <p>{message}</p>}
       </div>
     </div>
   );

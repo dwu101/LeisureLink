@@ -14,7 +14,8 @@ from werkzeug.utils import secure_filename
 from pathlib import Path
 from sqlalchemy.orm.attributes import flag_modified
 from settings import john_doe, jane_smith
-
+import datetime
+import jwt  
 
 
 
@@ -92,9 +93,10 @@ class User(db.Model):
     pfp_link=db.Column(db.String(100))
     friends = db.Column(db.ARRAY(db.String(100)))
     tags = db.Column(db.ARRAY(db.String(100))) 
+    events = db.Column(db.ARRAY(db.String(100)))
 
 
-    def __init__(self,account_id, username,password,email,bio,display_name,status,groups,pfp_link,friends, tags):
+    def __init__(self,account_id, username,password,email,bio,display_name,status,groups,pfp_link,friends, tags, events=[]):
         self.account_id = account_id
         self.username=username
         self.password=password
@@ -106,6 +108,7 @@ class User(db.Model):
         self.pfp_link=pfp_link
         self.friends = friends if friends is not None else []
         self.tags = tags if tags is not None else []
+        self.events = events
 
 class UserGCAL(db.Model):
     __tablename__='UserGCal'
@@ -117,10 +120,11 @@ class UserGCAL(db.Model):
     client_id=db.Column(db.String(500), nullable=False)
     client_secret=db.Column(db.String(500), nullable=False)
     scopes=db.Column(db.String(500), nullable=False)
+    email=db.Column(db.String(500), nullable=False)
 
     
 
-    def __init__(self, account_id, username, token, refresh_token, token_uri, client_id, client_secret, scopes):
+    def __init__(self, account_id, username, token, refresh_token, token_uri, client_id, client_secret, scopes, email):
         self.account_id=account_id
         self.username=username
         self.token = token
@@ -129,6 +133,7 @@ class UserGCAL(db.Model):
         self.token_uri=token_uri
         self.client_secret=client_secret
         self.scopes = scopes
+        self.email = email
 
 
 class Groups(db.Model):
@@ -162,7 +167,7 @@ def create_user(username, password, email):
         print(e)
         return {"success": False, "message": "Username or email already exists."}
     
-def create_user_GCAL(username, token, refresh_token, token_uri, client_id, client_secret, scopes):
+def create_user_GCAL(username, token, refresh_token, token_uri, client_id, client_secret, scopes, email):
     account_id = get_user_by_username(username).account_id
 
     user_to_delete = UserGCAL.query.filter_by(username=username).first()
@@ -179,7 +184,8 @@ def create_user_GCAL(username, token, refresh_token, token_uri, client_id, clien
         token_uri=token_uri,
         client_id=client_id,
         client_secret=client_secret,
-        scopes=scopes
+        scopes=scopes,
+        email=email
         
     )
     db.session.add(insert)
@@ -209,7 +215,7 @@ def get_groups(username):
 
 def get_pfp_link(username):
     user = get_user_by_username(username)
-    return user.pfp_link if user else "/profile-pictures/defaultpfp.png"
+    return user.pfp_link if user else "/profile-pictures/defaultpfp.jpg"
 
 def get_tags(username):
     user = get_user_by_username(username)
@@ -289,7 +295,7 @@ def login():
     # print(password)
     if check_user_credentials(username, password):
         # print("A")
-        return jsonify({"status": 200, "message": "success"})
+        return jsonify({"status": 200, "message": "Success!"})
     else:
         # print("B")
         return jsonify({"status": 401, "message": "Invalid credentials"})
@@ -957,24 +963,23 @@ def oauth2callback():
         print(cookies[state])
         print("Session after storing credentials:", dict(session))
 
-        # Instead of redirecting, return a response that sets a cookie and then redirects
+        decoded = jwt.decode(credentials.id_token, options={"verify_signature": False})
+        google_email = decoded['email']
+
         response = jsonify({
             'success': True,
             'redirect_url': 'http://localhost:3000/ProfilePage'
         })
 
-        # Ensure the session is saved
         session.modified = True
-                # Set an additional cookie to verify cookie functionality
         response.set_cookie('auth_check', 'true', 
                           httponly=False, 
                           secure=False, 
                           samesite='Lax')
 
-        # Redirect after ensuring cookies are set
 
                                                                                                 #INSERT FUNCTION TO ADD GCAL DATA INTO DB
-        create_user_GCAL(cookies[state]["username"], credentials.token, credentials.refresh_token, credentials.token_uri, credentials.client_id,credentials.client_secret,credentials.scopes)
+        create_user_GCAL(cookies[state]["username"], credentials.token, credentials.refresh_token, credentials.token_uri, credentials.client_id,credentials.client_secret,credentials.scopes, google_email)
         return redirect('http://localhost:3000/ProfilePage')
 
     except Exception as e:
@@ -993,15 +998,16 @@ def check_cred():
         'authenticated': has_credentials,
     })
 
-
 @app.route('/addEvent', methods=['POST'])
 def add_event():
     try:
         data = request.json
+        friends = data['friends']
+        description = data.get("description", '') + '\n' + f"With {', '.join(friends[:-1])}, and {friends[-1]}" if friends else data.get("description", '')
         
         event = {
             'summary': data['summary'],
-            'description': data.get('description', ''),
+            'description': description,
             'start': {
                 'dateTime': data['startDateTime'],
                 'timeZone': 'UTC',
@@ -1024,10 +1030,10 @@ def add_event():
             events = events_result.get('items', [])
             return len(events) > 0
         
-        friends = data['friends']
         conflicts = []
+        non_gcal_users = []
         
-        # Check for conflicts for each friend
+        # Check for conflicts and identify non-GCAL users
         for friend in friends:
             friend_creds = UserGCAL.query.filter_by(username=friend).first()
             
@@ -1038,13 +1044,11 @@ def add_event():
                     token_uri=friend_creds.token_uri,
                     client_id=friend_creds.client_id,
                     client_secret=friend_creds.client_secret,
-                    scopes=SCOPES  # Using the full SCOPES list
+                    scopes=SCOPES
                 )
                 
                 try:
                     friend_service = build('calendar', 'v3', credentials=friend_credentials)
-                    
-                    # Check for conflicts
                     has_conflict = check_calendar_conflicts(
                         friend_service,
                         data['startDateTime'],
@@ -1060,33 +1064,166 @@ def add_event():
                         'error': f'Failed to access calendar for user {friend}',
                         'details': str(e)
                     }), 500
+            else:
+                non_gcal_users.append(friend)
         
-        # If there are conflicts, return error with conflicting users
         if conflicts:
             return jsonify({
                 'error': 'There is a Calendar Conflict for users invited (potentially you)',
                 'conflicting_users': conflicts
             }), 409
+
         
-        # If no conflicts, proceed with adding the event
         for friend in friends:
-            friend_creds = UserGCAL.query.filter_by(username=friend).first()
-            
-            if friend_creds:
+            if friend not in non_gcal_users:
+                other_friends = [f for f in friends if f != friend]
+                description = data.get("description", '')
+                if other_friends:
+                    description += '\n' + f"With {', '.join(other_friends[:-1])}, and {other_friends[-1]}" if len(other_friends) > 1 else f"\nWith {other_friends[0]}"
+                
+                event = {
+                    'summary': data['summary'],
+                    'description': description,
+                    'start': {
+                        'dateTime': data['startDateTime'],
+                        'timeZone': 'UTC',
+                    },
+                    'end': {
+                        'dateTime': data['endDateTime'],
+                        'timeZone': 'UTC',
+                    },
+                }
+                
+                friend_creds = UserGCAL.query.filter_by(username=friend).first()
                 friend_credentials = Credentials(
                     token=friend_creds.token,
                     refresh_token=friend_creds.refresh_token,
                     token_uri=friend_creds.token_uri,
                     client_id=friend_creds.client_id,
                     client_secret=friend_creds.client_secret,
-                    scopes=SCOPES  # Using the full SCOPES list
+                    scopes=SCOPES
                 )
                 
                 friend_service = build('calendar', 'v3', credentials=friend_credentials)
                 friend_service.events().insert(calendarId='primary', body=event).execute()
 
+        def check_event_conflict(existing_events, new_start, new_end):
+            new_start_dt = datetime.datetime.fromisoformat(new_start.replace('Z', ''))
+            new_end_dt = datetime.datetime.fromisoformat(new_end.replace('Z', ''))
+            
+            for i in range(0, len(existing_events), 4):
+                event_start = datetime.datetime.fromisoformat(existing_events[i + 1].replace('Z', ''))
+                event_end = datetime.datetime.fromisoformat(existing_events[i + 2].replace('Z', ''))
+                
+                if (new_start_dt <= event_end and new_end_dt >= event_start):
+                    return True
+            return False
+
+        for username in non_gcal_users:
+            user = User.query.filter_by(username=username).first()
+            if user:
+                if user.events is None:
+                    user.events = []
+                    db.session.commit()
+                
+                if check_event_conflict(user.events, data['startDateTime'], data['endDateTime']):
+                    conflicts.append(username)
+                    continue
+                
+                other_friends = [f for f in friends if f != username]
+                description = data.get("description", '')
+                if other_friends:
+                    description += '\n' + f"With {', '.join(other_friends[:-1])}, and {other_friends[-1]}" if len(other_friends) > 1 else f"\nWith {other_friends[0]}"
+                
+                new_events = user.events.copy() if user.events else []
+                new_events.extend([
+                    data['summary'],
+                    data['startDateTime'],
+                    data['endDateTime'],
+                    description
+                ])
+                
+                user.events = new_events
+                db.session.add(user)
+                db.session.commit()
+                db.session.refresh(user)
+                print(f"Events after update: {user.events}")
+
+        if conflicts:
+            return jsonify({
+                'error': 'There is a Calendar Conflict for users invited',
+                'conflicting_users': conflicts
+            }), 409
+
         return jsonify({'success': True})
     
+    except Exception as e:
+        print(e)
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/getEvents', methods=['GET'])
+def get_events():
+    try:
+        username = request.args.get('username')
+        user_creds = UserGCAL.query.filter_by(username=username).first()
+        
+        if user_creds:
+            credentials = Credentials(
+                token=user_creds.token,
+                refresh_token=user_creds.refresh_token, 
+                token_uri=user_creds.token_uri,
+                client_id=user_creds.client_id,
+                client_secret=user_creds.client_secret,
+                scopes=SCOPES
+            )
+
+            service = build('calendar', 'v3', credentials=credentials)
+            
+            now = datetime.datetime.utcnow()
+            two_weeks = now + datetime.timedelta(weeks=2)
+            
+            events_result = service.events().list(
+                calendarId='primary',
+                timeMin=now.isoformat() + 'Z',
+                timeMax=two_weeks.isoformat() + 'Z',
+                singleEvents=True,
+                orderBy='startTime'
+            ).execute()
+
+            events = events_result.get('items', [])
+            
+            formatted_events = []
+            for event in events:
+                formatted_events.append({
+                    'title': event.get('summary'),
+                    'description': event.get('description'),
+                    'start': event['start'].get('dateTime', event['start'].get('date')),
+                    'end': event['end'].get('dateTime', event['end'].get('date'))
+                })
+            return jsonify({'events': formatted_events})
+        
+        else:
+            user = User.query.filter_by(username=username).first()
+            if not user:
+                return jsonify({'error': 'User not found'}), 404
+
+            formatted_events = []
+            if user.events:
+
+                # Process events in groups of 4 (summary, start, end, description)
+                for i in range(0, len(user.events), 4):
+                    formatted_events.append({
+                        'title': user.events[i],
+                        'start': user.events[i + 1],
+                        'end': user.events[i + 2],
+                        'description': user.events[i + 3]
+                    })
+            print("Printing formatted events")
+            print(user.events)
+            print(formatted_events)
+            return jsonify({'events': formatted_events})
+
     except Exception as e:
         print(e)
         return jsonify({'error': str(e)}), 500
@@ -1198,7 +1335,7 @@ def insert_dummy_data():
         display_name="Jane Smith",
         status="Busy",
         groups=["Developers"],
-        pfp_link="/profile-pictures/defaultpfp.png",
+        pfp_link="/profile-pictures/defaultpfp.jpg",
         friends= ["john_doe"],
         tags = []
 
@@ -1213,7 +1350,7 @@ def insert_dummy_data():
         display_name="of Arc, Joan",
         status="Busy",
         groups=["Developers", "Designers"],
-        pfp_link="/profile-pictures/defaultpfp.png",
+        pfp_link="/profile-pictures/defaultpfp.jpg",
         friends= ["john_doe"],
         tags = ['Cooking', 'Festivals', 'Theater']
     )
@@ -1236,7 +1373,8 @@ def insert_dummy_data():
         token_uri=john_doe['token_uri'],
         client_id=john_doe['client_id'],
         client_secret=john_doe['client_secret'],
-        scopes=john_doe['scopes']
+        scopes=john_doe['scopes'],
+        email=john_doe['email']
     )
 
     user_gcal2 = UserGCAL(
@@ -1247,7 +1385,8 @@ def insert_dummy_data():
         token_uri=jane_smith['token_uri'],
         client_id=jane_smith['client_id'],
         client_secret=jane_smith['client_secret'],
-        scopes=jane_smith['scopes']
+        scopes=jane_smith['scopes'],
+        email=jane_smith['email']
     )
 
     # user_gcal2 = UserGCAL(
@@ -1276,7 +1415,7 @@ def insert_dummy_data():
     # Add and commit all the dummy data to the database
     db.session.add(user_gcal1)
     print("3")
-    db.session.add(user_gcal2)
+    # db.session.add(user_gcal2)
     print("4")
     db.session.add(group1)
     print("5")

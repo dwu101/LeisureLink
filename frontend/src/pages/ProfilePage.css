@@ -258,3 +258,9 @@
 	color: #6b7280;
 	padding: 1rem;
   }
+
+  .events-list {
+	max-height: 400px;
+	overflow-y: auto;
+	padding: 1rem;
+   }

@@ -2,6 +2,8 @@ import './ProfilePage.css';
 import React, { useState, useEffect} from 'react';
 import Sidebar from '../components/SideBar';
 import StyledTagsDisplay from '../components/StyledTagsDisplay';
+import axios from 'axios';
+
 
 import { Link, useNavigate } from 'react-router-dom';  
 
@@ -15,13 +17,17 @@ const ProfilePage = () => {
   const [profile, setProfile] = useState(null);
   const [gcalLinked, setGcalLinked] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [events, setEvents] = useState([]);
+
   const navigate = useNavigate();
 
 
   const username = sessionStorage.getItem('username');
 
  
-  console.log(username)
+//   useEffect(() => {
+    
+// }, [username]);
   
   useEffect(() => {
 
@@ -77,6 +83,16 @@ const ProfilePage = () => {
       }
       
     };
+
+    const fetchEvents = async () => {
+      try {
+        const response = await axios.get(`/getEvents?username=${username}`);
+        setEvents(response.data.events);
+      } catch (error) {
+        console.error('Error fetching events:', error);
+      }
+    };
+    fetchEvents();
   
 
     fetchProfile();
@@ -153,7 +169,7 @@ const ProfilePage = () => {
     <aside className="profile-sidebar relative flex flex-col" style={{backgroundColor: "#e0e0e0"}}>
              <div className="profile-image-container">
           <img 
-            src={profile?.pfp_link || "/profile-pictures/defaultpfp.png"} 
+            src={profile?.pfp_link || "/profile-pictures/defaultpfp.jpg"} 
             alt="Profile" 
             className="profile-image" 
           />
@@ -287,6 +303,40 @@ const ProfilePage = () => {
 )}
             </div>
           </div>
+
+          <div className="featured-project" style={{backgroundColor: "#e0e0e0", marginTop: "20px"}}>
+ <h2>Upcoming Events</h2>
+ <div className="events-list">
+   {events?.length > 0 ? (
+     events.map((event, index) => (
+       <div
+         key={index}
+         style={{
+           backgroundColor: 'white',
+           padding: '1rem',
+           borderRadius: '0.5rem',
+           marginBottom: '0.5rem'
+         }}
+       >
+         <h3>{event.title}</h3>
+         <p>{event.description}</p>
+         <p>Start: {new Date(event.start).toLocaleString()}</p>
+         <p>End: {new Date(event.end).toLocaleString()}</p>
+       </div>
+     ))
+   ) : (
+     <div className="empty-events">
+       <p>No upcoming events</p>
+     </div>
+   )}
+ </div>
+</div>
+
+
+
+
+
+
         </main>
     </div>
     </div>
