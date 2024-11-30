@@ -97,13 +97,15 @@ const Sidebar = ({isOpen: propIsOpen, setIsOpen: propSetIsOpen, onClickFunc = nu
             <Link to="/SearchPage" onClick={toggleSidebar}>Search</Link>
           </li>
 
-          {gcalLinked && (
-  <li>
-    <Link to="/AddEvent" onClick={toggleSidebar}>Schedule a Hang Out!</Link>
-  </li>
-)}
+          <li>
+            <Link to="/ShowFriends" onClick={toggleSidebar}>See Friends</Link>
+          </li>
 
-          
+          {gcalLinked && (
+            <li>
+              <Link to="/AddEvent" onClick={toggleSidebar}>Schedule a Hang Out!</Link>
+            </li>
+          )}
           
           <li style={{marginTop:"50px",cursor: "pointer"}} onClick={logOut}>
              Sign Out
@@ -125,14 +127,13 @@ const Sidebar = ({isOpen: propIsOpen, setIsOpen: propSetIsOpen, onClickFunc = nu
           <li style={{cursor:"pointer"}}onClick={() => onClickFunc('/SearchPage')}>Search
           </li>
 
+          <li style={{cursor:"pointer"}}onClick={() => onClickFunc('/ShowFriends')}>See Friends
+          </li>
+
           {gcalLinked &&
             <li style={{cursor:"pointer"}}onClick={() => onClickFunc('/AddEvent')}>Schedule a Hang Out!
             </li>
           }
-
-          
-
-
         
           <li style={{marginTop:"50px",cursor: "pointer"}} onClick={logOut}>
              Sign Out

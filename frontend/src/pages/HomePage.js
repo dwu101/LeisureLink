@@ -171,7 +171,7 @@ function LoginPage() {
         {/* <Link to="/SignupPage"> */}
         {!signingUp && (
           <>
-          <button className="button" onClick={() => setSigningUp(true)}>Or Sign up today!</button>
+          <button className="button" onClick={() => {setSigningUp(true); setMessage('')}}>Or Sign up today!</button>
           <button type="submit" className="button">Login</button>
           </>
         )}

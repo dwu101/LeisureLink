@@ -10,6 +10,7 @@ import Testing from './pages/TESTING';
 import ProfilePageSearch from './pages/ProfilePageSearch';
 import EditGroups from './pages/EditGroups';
 import SeeGroup from './pages/SeeGroup';
+import ShowFriends from './pages/ShowFriends';
 
 const routes = [
   <Route path="/" element={<LoginPage />} key="login" />,
@@ -22,8 +23,7 @@ const routes = [
   <Route path="/Testing" element={<Testing />} key="Testing" />,
   <Route path="/EditGroups" element={<EditGroups />} key="EditGroups" />,
   <Route path="/SeeGroup/:group" element={<SeeGroup />} key="SeeGroup" />,
-
-
+  <Route path="/ShowFriends" element={<ShowFriends />} key="ShowFriends" ></Route>
 ];
 
 export default routes;

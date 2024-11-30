@@ -36,7 +36,7 @@ const EditGroups = () => {
 
   useEffect(() => {
     const handlePopState = (event) => {
-      if (hasChanges) {  // Check both conditions
+      if (hasChanges) {  
         event.preventDefault();
         const currentUrl = window.location.href;
         setNavPath(event.target.location.pathname);
@@ -49,14 +49,12 @@ const EditGroups = () => {
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [hasChanges]);  // Add addNonFriend as dependency
+  }, [hasChanges]);  
 
   useEffect(() => {
-    // console.log("addNonFriend value in effect:", addNonFriend);
     const unsavedChanges = newGroupName.trim() !== '' || 
                           selectedFriends.length >= 2 || 
                           removedGroups.length >= 1;
-                          // addNonFriend; 
     console.log("unsavedChanges calculated as:", unsavedChanges);
     setHasChanges(unsavedChanges);
 }, [newGroupName, selectedFriends, removedGroups.length]); 

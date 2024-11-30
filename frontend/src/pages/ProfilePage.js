@@ -43,6 +43,7 @@ const ProfilePage = () => {
           // console.log("BBBB")
           // console.log(result.profile.pfp_link)
           // sessionStorage.setItem('pfp_link', result.profile.pfp_link)
+          console.log(result.profile)
 
         } else {
           setError(result.message || 'Failed to fetch profile');
@@ -88,6 +89,8 @@ const ProfilePage = () => {
       try {
         const response = await axios.get(`/getEvents?username=${username}`);
         setEvents(response.data.events);
+        console.log("PPPP")
+        console.log(response.data.events);
       } catch (error) {
         console.error('Error fetching events:', error);
       }
@@ -99,18 +102,25 @@ const ProfilePage = () => {
   }, [gcalLinked, username]);
 
   const handleToggle = async () => {
+    let data;
     if (profile.status === "Active"){
       setProfile(prev => ({ ...prev, status: "Busy" }));
+      data = {
+        username: username,
+        newStatus: "Busy",
+  
+      };
     }
     else{
       setProfile(prev => ({ ...prev, status: "Active" }));
+      data = {
+        username: username,
+        newStatus: "Active",
+  
+      };
     }
 
-    const data = {
-      username: username,
-      newStatus: profile.status,
-
-    };
+    
 
     try {
       const response = await fetch('/changeStatus', {
@@ -189,7 +199,7 @@ const ProfilePage = () => {
 
           <InfoField 
             label="Bio" 
-            value={profile?.bio || 'None...'} 
+            value={profile?.bio || 'None'} 
           />
 
 
@@ -305,7 +315,7 @@ const ProfilePage = () => {
           </div>
 
           <div className="featured-project" style={{backgroundColor: "#e0e0e0", marginTop: "20px"}}>
- <h2>Upcoming Events</h2>
+ <h2>Events in Next 2 Weeks</h2>
  <div className="events-list">
    {events?.length > 0 ? (
      events.map((event, index) => (

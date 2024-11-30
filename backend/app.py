@@ -14,7 +14,7 @@ from werkzeug.utils import secure_filename
 from pathlib import Path
 from sqlalchemy.orm.attributes import flag_modified
 from settings import john_doe, jane_smith
-import datetime
+from datetime import datetime, timedelta, timezone
 import jwt  
 
 
@@ -91,12 +91,12 @@ class User(db.Model):
     status=db.Column(db.String(40))
     groups=db.Column(db.ARRAY(db.String(100)))
     pfp_link=db.Column(db.String(100))
-    friends = db.Column(db.ARRAY(db.String(100)))
+    friends = db.Column(db.ARRAY(db.String(100)), default=[])
     tags = db.Column(db.ARRAY(db.String(100))) 
     events = db.Column(db.ARRAY(db.String(100)))
 
 
-    def __init__(self,account_id, username,password,email,bio,display_name,status,groups,pfp_link,friends, tags, events=[]):
+    def __init__(self,account_id, username,password,email,bio,display_name,status,groups,pfp_link,friends=[], tags=[], events=[]):
         self.account_id = account_id
         self.username=username
         self.password=password
@@ -227,13 +227,24 @@ def add_friend(current_user, friend_username):
 
     if not current_user_obj or not friend_user_obj:
         return {"success": False, "message": "User not found"}
+    
+    if current_user_obj.friends is None:
+        current_user_obj.friends = []
 
     if friend_user_obj.username in current_user_obj.friends:
         return {"success": False, "message": "Friend already added"}
 
-    current_user_obj.friends.append(friend_user_obj.username)
-    db.session.commit()
-    return {"success": True, "message": "Friend added successfully"}
+    current_user_obj.friends = current_user_obj.friends + [friend_user_obj.username]
+    
+    try:
+        db.session.commit()
+        print(f"Friends after update: {current_user_obj.friends}")
+        return {"success": True, "message": "Friend added successfully"}
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error adding friend: {str(e)}")
+        return {"success": False, "message": "Database error occurred"}
+
 
 def remove_friend(current_user, friend_username):
     current_user_obj = get_user_by_username(current_user)
@@ -849,6 +860,7 @@ def add_friend_endpoint():
     data = request.json
     current_user = data.get('current_user')
     friend_username = data.get('friend_username')
+    print(current_user, friend_username)
 
     if not current_user or not friend_username:
         return jsonify({"success": False, "message": "Current user and friend username are required"}), 400
@@ -1019,21 +1031,36 @@ def add_event():
         }
         
         def check_calendar_conflicts(service, start_time, end_time):
-            events_result = service.events().list(
-                calendarId='primary',
-                timeMin=start_time,
-                timeMax=end_time,
-                singleEvents=True,
-                orderBy='startTime'
-            ).execute()
-            
-            events = events_result.get('items', [])
-            return len(events) > 0
+            try:
+                events_result = service.events().list(
+                    calendarId='primary',
+                    timeMin=start_time,
+                    timeMax=end_time,
+                    singleEvents=True,
+                    orderBy='startTime'
+                ).execute()
+                
+                events = events_result.get('items', [])
+                
+                for event in events:
+                    if 'dateTime' not in event['start'] or 'dateTime' not in event['end']:
+                        continue  
+                        
+                    event_start = event['start']['dateTime']
+                    event_end = event['end']['dateTime']
+                    
+                    if (start_time < event_end and end_time > event_start):
+                        return True
+                        
+                return False
+                
+            except Exception as e:
+                print(f"Error checking calendar conflicts: {e}")
+                return False
         
         conflicts = []
         non_gcal_users = []
         
-        # Check for conflicts and identify non-GCAL users
         for friend in friends:
             friend_creds = UserGCAL.query.filter_by(username=friend).first()
             
@@ -1108,12 +1135,12 @@ def add_event():
                 friend_service.events().insert(calendarId='primary', body=event).execute()
 
         def check_event_conflict(existing_events, new_start, new_end):
-            new_start_dt = datetime.datetime.fromisoformat(new_start.replace('Z', ''))
-            new_end_dt = datetime.datetime.fromisoformat(new_end.replace('Z', ''))
+            new_start_dt = datetime.fromisoformat(new_start.replace('Z', ''))
+            new_end_dt = datetime.fromisoformat(new_end.replace('Z', ''))
             
             for i in range(0, len(existing_events), 4):
-                event_start = datetime.datetime.fromisoformat(existing_events[i + 1].replace('Z', ''))
-                event_end = datetime.datetime.fromisoformat(existing_events[i + 2].replace('Z', ''))
+                event_start = datetime.fromisoformat(existing_events[i + 1].replace('Z', ''))
+                event_end = datetime.fromisoformat(existing_events[i + 2].replace('Z', ''))
                 
                 if (new_start_dt <= event_end and new_end_dt >= event_start):
                     return True
@@ -1125,10 +1152,10 @@ def add_event():
                 if user.events is None:
                     user.events = []
                     db.session.commit()
-                
-                if check_event_conflict(user.events, data['startDateTime'], data['endDateTime']):
-                    conflicts.append(username)
-                    continue
+                else:
+                    if check_event_conflict(user.events, data['startDateTime'], data['endDateTime']):
+                        conflicts.append(username)
+                        continue
                 
                 other_friends = [f for f in friends if f != username]
                 description = data.get("description", '')
@@ -1161,7 +1188,6 @@ def add_event():
         print(e)
         return jsonify({'error': str(e)}), 500
 
-
 @app.route('/getEvents', methods=['GET'])
 def get_events():
     try:
@@ -1180,13 +1206,16 @@ def get_events():
 
             service = build('calendar', 'v3', credentials=credentials)
             
-            now = datetime.datetime.utcnow()
-            two_weeks = now + datetime.timedelta(weeks=2)
+            now = datetime.now(timezone.utc)
+            two_weeks = now + timedelta(weeks=2)
+            
+            now_str = now.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+            two_weeks_str = two_weeks.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
             
             events_result = service.events().list(
                 calendarId='primary',
-                timeMin=now.isoformat() + 'Z',
-                timeMax=two_weeks.isoformat() + 'Z',
+                timeMin=now_str,
+                timeMax=two_weeks_str,
                 singleEvents=True,
                 orderBy='startTime'
             ).execute()
@@ -1204,24 +1233,34 @@ def get_events():
             return jsonify({'events': formatted_events})
         
         else:
+            print("WJOENGOIWNEGOIWNEG")
             user = User.query.filter_by(username=username).first()
             if not user:
                 return jsonify({'error': 'User not found'}), 404
 
-            formatted_events = []
-            if user.events:
+            current_date = datetime.now().date()
+            two_weeks_future = current_date + timedelta(weeks=2)
 
-                # Process events in groups of 4 (summary, start, end, description)
+            formatted_events = []
+            print(f"all events {user.events}")
+            if user.events:
                 for i in range(0, len(user.events), 4):
-                    formatted_events.append({
-                        'title': user.events[i],
-                        'start': user.events[i + 1],
-                        'end': user.events[i + 2],
-                        'description': user.events[i + 3]
-                    })
-            print("Printing formatted events")
-            print(user.events)
-            print(formatted_events)
+                    try:
+                        start_date = datetime.strptime(user.events[i + 1], '%Y-%m-%dT%H:%M:%S.%fZ').date()
+                        
+                        if start_date <= two_weeks_future:
+                            formatted_events.append({
+                                'title': user.events[i],
+                                'start': user.events[i + 1],
+                                'end': user.events[i + 2],
+                                'description': user.events[i + 3]
+                            })
+                    except ValueError:
+                        print(f"Error parsing date: {user.events[i + 1]}")
+                        continue
+
+            print("Printing filtered formatted events")
+            print(f"formatted_events {formatted_events}")
             return jsonify({'events': formatted_events})
 
     except Exception as e:
@@ -1231,7 +1270,6 @@ def get_events():
 @app.route('/logout', methods=['POST', 'OPTIONS'])
 def logout():
     try:
-        # Revoke Google OAuth token if it exists
         if 'credentials' in session:
             try:
                 credentials = session['credentials']

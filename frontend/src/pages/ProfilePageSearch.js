@@ -37,6 +37,7 @@ const ProfilePageSearch = () => {
         
         if (result.success) {
           setProfile(result.profile);
+          console.log(result.profile)
         } else {
           setError(result.message || 'Failed to fetch profile');
         }
@@ -94,6 +95,7 @@ const ProfilePageSearch = () => {
         setShowAlert(true);
         setAlertType('success');
         setAlertMessage('Successfully Added Friend!')
+        setIsFriend(true)
       } else {
         console.error('Failed to send friend request:', result.message);
       }
@@ -163,7 +165,7 @@ const ProfilePageSearch = () => {
 
           <InfoField 
             label="Bio" 
-            value={profile?.bio || 'None...'} 
+            value={profile?.bio || 'None'} 
           />
 
           <div style={{marginTop: "30px"}}>
