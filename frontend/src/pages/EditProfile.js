@@ -383,9 +383,17 @@ function EditProfile() {
             value={profile?.bio || 'None'} 
           />
 
-          <div >
+            <div style={{marginTop: "30px"}}>
+            {profile?.tags.length > 0 ? (
+              <>
             <InfoField label="Interests"/>
             <StyledTagsDisplay tags={profile?.tags} />
+            </>
+            ) : (
+              <InfoField label="Interests" value={"None"}/>
+
+            )}
+
             
           </div>
         

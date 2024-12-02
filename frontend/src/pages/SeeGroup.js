@@ -252,9 +252,9 @@ const SeeGroup = () => {
                         <span className="status">Busy</span>
                       </div>
                         }
-                    {result.status === "Active" && 
+                    {result.status === "Available" && 
                       <div style={{ width: '120px', textAlign: 'right', marginRight: '49px' }}>
-                        <span className="status">Active</span>
+                        <span className="status">Available</span>
                       </div>
                         }
 

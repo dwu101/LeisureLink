@@ -159,7 +159,7 @@ const ProfilePageSearch = () => {
           <InfoField label="Name" value={profile?.display_name || 'None'} />
           <InfoField label="Username" value={username} />
           <InfoField label="Email" value={profile?.email || 'Loading...'} />
-          <InfoField label="Status" value={profile?.status || 'Active'} />
+          <InfoField label="Status" value={profile?.status || 'Available'} />
           
       
 
@@ -169,8 +169,17 @@ const ProfilePageSearch = () => {
           />
 
           <div style={{marginTop: "30px"}}>
+            {profile?.tags.length > 0 ? (
+              <>
             <InfoField label="Interests"/>
             <StyledTagsDisplay tags={profile?.tags} />
+            </>
+            ) : (
+              <InfoField label="Interests" value={"None"}/>
+
+            )}
+
+            
           </div>
           
          

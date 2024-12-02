@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 
 const ProfileIcon = ({onClickFunc = null}) => {
   const navigate = useNavigate();
-  const pfp_link = sessionStorage.getItem('pfp_link')
+  const pfp_link = sessionStorage.getItem('pfp_link') || "/profile-pictures/defaultpfp.jpg"
   console.log("PFPF LINK")
   console.log(pfp_link)
   if (!onClickFunc){

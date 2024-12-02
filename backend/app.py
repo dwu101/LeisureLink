@@ -156,15 +156,36 @@ def check_user_credentials(username, password):
 
 def create_user(username, password, email):
     try:
-       
-        new_user = User(account_id=User.query.count()+1, username=username, password=password, email=email, bio="", display_name="", status="Active", groups=[], pfp_link="", friends= [], tags=[])
+        existing_username = User.query.filter_by(username=username).first()
+        if existing_username:
+            print("AHHHHHHHHHHH")
+            return {"success": False, "message": "Username already exists."}
+            
+        existing_email = User.query.filter_by(email=email).first()
+        if existing_email:
+            return {"success": False, "message": "Email already exists."}
+        
+        new_user = User(
+            account_id=User.query.count()+1,
+            username=username,
+            password=password,
+            email=email,
+            bio="",
+            display_name="",
+            status="Available",
+            groups=[],
+            pfp_link="",
+            friends=[],
+            tags=[],
+            events=[]
+        )
         db.session.add(new_user)
         db.session.commit()
         return {"success": True, "message": "User created successfully."}
     except Exception as e:
         db.session.rollback()
         print(e)
-        return {"success": False, "message": "Username or email already exists."}
+        return {"success": False, "message": f"Error creating user: {str(e)}"}
     
 from datetime import datetime
 from googleapiclient.discovery import build
@@ -245,7 +266,7 @@ def get_display_name(username):
 
 def get_status(username):
     user = get_user_by_username(username)
-    return user.status if user else "Active"
+    return user.status if user else "Available"
 
 def get_groups(username):
     user = get_user_by_username(username)
@@ -1347,7 +1368,7 @@ def insert_dummy_data():
         email="john@example.com",
         bio="Just a regular user.",
         display_name="John Doe",
-        status="Active",
+        status="Available",
         groups=["Developers", "Designers"],
         pfp_link="/profile-pictures/TESTING.jpg",
         friends= ["jane_smith"],

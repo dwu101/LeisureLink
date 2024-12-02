@@ -99,7 +99,7 @@ const ProfilePage = () => {
 
   const handleToggle = async () => {
     let data;
-    if (profile.status === "Active"){
+    if (profile.status === "Available"){
       setProfile(prev => ({ ...prev, status: "Busy" }));
       data = {
         username: username,
@@ -108,10 +108,10 @@ const ProfilePage = () => {
       };
     }
     else{
-      setProfile(prev => ({ ...prev, status: "Active" }));
+      setProfile(prev => ({ ...prev, status: "Available" }));
       data = {
         username: username,
-        newStatus: "Active",
+        newStatus: "Available",
   
       };
     }
@@ -168,13 +168,13 @@ const ProfilePage = () => {
           <InfoField label="Name" value={profile?.display_name || 'None'} />
           <InfoField label="Username" value={username} />
           <InfoField label="Email" value={profile?.email || 'Loading...'} />
-          <InfoField label="Status" value={profile?.status || 'Active'} />
+          <InfoField label="Status" value={profile?.status || 'Available'} />
           
           <button
             status={profile.status}
             onClick={handleToggle}
             style={{fontSize:"15px"}}
-          >{profile.status==="Active" ? "Click to become Inactive" : "Click to become Active"}</button>
+          >{profile.status==="Available" ? "Click to become Busy" : "Click to become Available"}</button>
 
           <InfoField 
             label="Bio" 

@@ -95,12 +95,17 @@ function LoginPage() {
               'Content-Type': 'application/json'  
             }
           });
-          
-          setMessage(response.data.message);
-          sessionStorage.setItem('username', username);
-          sessionStorage.setItem('pfp_link',"/profile-pictures/defaultpfp.jpg")
-          
-          navigate("/ProfilePage");
+          if (response.data.success){
+            setMessage(response.data.message);
+            sessionStorage.setItem('username', username);
+            sessionStorage.setItem('pfp_link',"/profile-pictures/defaultpfp.jpg")
+            
+            navigate("/ProfilePage");
+          }
+          else{
+            setMessage(response?.data?.message || "Signup failed. Please try again.");
+
+          }
           
         } catch (error) {
           setMessage(error.response?.data?.error || "Signup failed. Please try again.");
