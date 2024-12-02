@@ -279,7 +279,7 @@ function EditProfile() {
   const InteractiveTagsDisplay = ({ tags, onClick, isSelectable }) => {
     const handleClick = (tag) => (e) => {
       e.stopPropagation();
-      onClick(tag.replace(' ✕', '')); // Remove the ✕ before passing to handler
+      onClick(tag.replace(' ✕', '')); 
     };
   
     const displayTags = tags.map(tag => ({
@@ -344,7 +344,7 @@ function EditProfile() {
 
  
 
-  if (loading) return <div className="flex justify-center p-4">Loading...</div>;
+  if (loading) return <div className="flex justify-center p-4"></div>;
   if (error) return <div className="flex justify-center p-4 text-red-500">{error}</div>;
 
   

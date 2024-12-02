@@ -14,7 +14,7 @@
 	border-radius: 8px;
 	padding: 1.5rem;
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-	background-color: #B2BEB5;  /* Only keep this one */
+	background-color: #B2BEB5; 
   }
   
   .profile-image-container {
@@ -34,8 +34,8 @@
 	gap: 1rem;
   }
   .profile-info button {
-	width: auto; /* Reset any width constraints */
-	align-self: flex-start; /* Align button to the left instead of stretching */
+	width: auto; 
+	align-self: flex-start;
 	height: 40px;
 	width: 150px;
 
@@ -53,8 +53,8 @@
 	gap: 0.25rem;
   }
   .info-field button {
-	width: auto; /* Reset any width constraints */
-	align-self: flex-start; /* Align button to the left instead of stretching */
+	width: auto; 
+	align-self: flex-start; 
 	height: 100px
   }
 
@@ -73,7 +73,6 @@
 	display: flex;
 	flex-direction: column;
 	gap: 2rem;
-	/* background-color: aliceblue; */
   }
   
   .featured-project {
@@ -109,9 +108,7 @@
 	transition: transform 0.2s ease;
   }
   
-  /* .post-card:hover {
-	transform: translateY(-2px);
-  } */
+
   
   .post-card .post-image {
 	width: 100%;
@@ -148,7 +145,6 @@
   }
 
   body {
-	/* margin: 0; */
 	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
 	  'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
 	  sans-serif;
@@ -164,9 +160,8 @@
 	width: 64px;
 	height: 64px;
 	border-radius: 50%;
-	background-color: #dc2626; /* Red color */
+	background-color: #dc2626; 
 	border: none;
-	/* cursor: pointer; */
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -198,7 +193,6 @@
 	font-weight: 500;
   }
 
-  /* Add these styles to your existing ProfilePage.css file */
 
 .groups-header {
 	display: flex;
@@ -227,19 +221,16 @@
 	transform: none !important;
   transition: none !important;
   box-shadow: none !important;
-  cursor: default;  /* Add this to show the default cursor */
+  cursor: default; 
   user-select: none;  
   }
-  /*  */
   .group-item {
 	background-color: white;
 	padding: 1rem;
 	border-radius: 0.5rem;
-	/* border: 1px solid #e5e7eb; */
-	cursor: default;  /* Add this to show the default cursor */
-  user-select: none;  /* Optional: prevents text selection */
-	/* cursor: pointer; */
-	/* transition: all 0.2s ease-in-out; */
+	cursor: default;  
+  user-select: none; 
+
   }
   
 

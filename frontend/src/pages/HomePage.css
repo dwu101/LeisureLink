@@ -17,7 +17,6 @@
   padding: 40px;
   background-color: #e0e0e0;
   border-radius: 8px 0 0 8px;
-  /* Center the text content */
   display: flex;
   flex-direction: column;
   justify-content: top;
@@ -29,7 +28,6 @@
   flex: 1;
   padding: 40px;
   border-radius: 0 8px 8px 0;
-  /* Center the form */
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -39,15 +37,15 @@
   display: flex;
   flex-direction: column;
   gap: 15px;
-  width: 100%;  /* Take full width of parent */
-  align-items: center;  /* Center form elements */
+  width: 100%;
+  align-items: center;  
 }
 
 .label {
   font-weight: 500;
   color: #333;
   margin-bottom: 5px;
-  text-align: center;  /* Center label text */
+  text-align: center;  
 }
 
 .input {
@@ -55,8 +53,8 @@
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 16px;
-  width: 80%;  /* Take most but not all of the form width */
-  text-align: center;  /* Center input text */
+  width: 80%; 
+  text-align: center;  
 }
 
 .input:focus {
@@ -74,8 +72,8 @@
   cursor: pointer;
   font-size: 16px;
   margin-top: 10px;
-  width: 80%;  /* Match input width */
-  text-align: center;  /* Center button text */
+  width: 80%;  
+  text-align: center; 
 }
 
 .button:hover {
@@ -91,22 +89,21 @@
 .h1 {
   margin-bottom: 10px;
   color: #333;
-  text-align: center;  /* Center heading text */
+  text-align: center;  
 }
 
 .h2 {
   color: #666;
   font-weight: 400;
   font-size: 16px;
-  text-align: center;  /* Center heading text */
+  text-align: center;
 }
 
-/* Add this to handle the Link component wrapping the button */
 .signinbox a {
   width: 100%;
   display: flex;
   justify-content: center;
-  text-decoration: none;  /* Remove underline from link */
+  text-decoration: none;  
 }
 
 

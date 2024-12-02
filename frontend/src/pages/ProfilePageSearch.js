@@ -57,8 +57,8 @@ const ProfilePageSearch = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            currentUsername: sessionStorage.getItem('username'), // Current logged-in user
-            friendUsername: username // Profile being viewed
+            currentUsername: sessionStorage.getItem('username'), 
+            friendUsername: username 
           }),
         });
   

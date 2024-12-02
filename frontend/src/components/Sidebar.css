@@ -1,23 +1,21 @@
-/* .body{
-    width:50px;
-} */
+
 
 .sidebar-container {
     position: relative;
-    /* width:0px; */
+  
   }
   
   .hamburger-icon {
-    position: fixed; /* Keep it fixed so it doesn't move with the sidebar */
-    top: 20px; /* Adjust the position to your liking */
-    left: 5px; /* Adjust the position to your liking */
+    position: fixed; 
+    top: 20px; 
+    left: 5px; 
     width: 30px;
     height: 20px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     cursor: pointer;
-    z-index: 2000; /* Higher than the sidebar's z-index */
+    z-index: 2000;
 }
 
   

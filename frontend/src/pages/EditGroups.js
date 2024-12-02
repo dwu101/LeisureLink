@@ -76,13 +76,13 @@ const EditGroups = () => {
   }, [hasChanges]);
 
   useEffect(() => {
-    if (hasChanges) {  // Check both conditions
+    if (hasChanges) {  
       window.history.pushState(null, '', window.location.href);
     }
   }, [hasChanges]);
 
   const handleNavigation = (path) => {
-    if (hasChanges) { // Check both conditions
+    if (hasChanges) { 
       setNavPath(path);
       setShowPrompt(true);
     } else {
@@ -98,7 +98,7 @@ const EditGroups = () => {
   const handleLeave = () => {
     setShowPrompt(false);
     setHasChanges(false);
-    setaddNonFriend(false); // Reset search interface state
+    setaddNonFriend(false); 
     
     if (navPath) {
       navigate(navPath);
@@ -179,7 +179,6 @@ const EditGroups = () => {
 
   const handleCloseSearch = () => {
     setaddNonFriend(false);
-    // Only reset hasChanges if there are no other changes
     if (!newGroupName.trim() && selectedFriends.length < 2 && removedGroups.length < 1) {
       setHasChanges(false);
     }
@@ -244,7 +243,7 @@ const EditGroups = () => {
         },
         body: JSON.stringify({
           groupName: newGroupName,
-          usernames: selectedFriends // Include selected friends in the request
+          usernames: selectedFriends 
         })
       });
 
@@ -256,7 +255,7 @@ const EditGroups = () => {
           groups: [...(prev.groups || []), newGroupName]
         }));
         setNewGroupName('');
-        setSelectedFriends([username]); // Reset selected friends after successful group creation
+        setSelectedFriends([username]); 
         setAlertMessage("Group Added Successfully");
         setAlertType("success");
         setShowAlert(true);
@@ -289,7 +288,6 @@ const EditGroups = () => {
        
         <ProfileIcon onClickFunc={handleNavigation}/>
        
-         {/* Your Groups Section with Updated Button Format */}
          <div className="section-box"   style={{backgroundColor: "#e0e0e0"}}
          >
           <div className="flex items-center justify-between mb-4">

@@ -1,4 +1,3 @@
-// Alert.js
 import React, { useState, useEffect } from 'react';
 
 const Alert = ({ show, message, type = 'success', duration = 3000, onClose }) => {

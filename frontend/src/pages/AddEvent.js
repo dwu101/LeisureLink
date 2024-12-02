@@ -19,12 +19,15 @@ const AddEvent = () => {
   const [alertMessage, setAlertMessage] = useState('');
   const username = sessionStorage.getItem('username');
   const [friends, setFriends] = useState([]);
+  const [groups, setGroups] = useState([]);
   const [friendsLoading, setFriendsLoading] = useState(true);
   const [friendsError, setFriendsError] = useState(null);
   const [selectedFriends, setSelectedFriends] = useState([username]);
+  const [selectedGroups, setSelectedGroups] = useState([]);
   const [hasChanges, setHasChanges] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
   const [navPath, setNavPath] = useState('');
+  const [showFriends, setShowFriends] = useState(true);
 
   const navigate = useNavigate();
 
@@ -47,9 +50,10 @@ const AddEvent = () => {
                           eventDetails.description.trim() !== '' || 
                           eventDetails.startDateTime !== '' || 
                           eventDetails.endDateTime !== '' ||
-                          selectedFriends.length > 1;
+                          selectedFriends.length > 1 ||
+                          selectedGroups.length > 0;
     setHasChanges(unsavedChanges);
-  }, [eventDetails, selectedFriends]);
+  }, [eventDetails, selectedFriends, selectedGroups]);
 
   useEffect(() => {
     const handlePopState = (event) => {
@@ -116,6 +120,9 @@ const AddEvent = () => {
         
         if (result.success) {
           setFriends(result.friends);
+          setGroups(result.groups);
+          console.log("AAAAA")
+          console.log(result.groups)
         } else {
           setFriendsError(result.message || 'Failed to fetch friends');
         }
@@ -138,6 +145,22 @@ const AddEvent = () => {
         return [...prev, friendUsername];
       }
     });
+  };
+
+  const handleGroupToggle = (groupId) => {
+    setSelectedGroups(prev => {
+      if (prev.includes(groupId)) {
+        return prev.filter(id => id !== groupId);
+      } else {
+        return [...prev, groupId];
+      }
+    });
+  };
+
+  const handleToggleView = () => {
+    setShowFriends(!showFriends);
+    setSelectedFriends([username]);
+    setSelectedGroups([]);
   };
 
   const handleStartDateChange = (e) => {
@@ -165,10 +188,18 @@ const AddEvent = () => {
     });
   };
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (selectedFriends.length === 1) {
+    if (showFriends && selectedFriends.length === 1) {
       setAlertMessage('Please Select Someone to Invite');
+      setAlertType('error');
+      setShowAlert(true);
+      return;
+    }
+
+    if (!showFriends && selectedGroups.length === 0) {
+      setAlertMessage('Please Select at Least One Group');
       setAlertType('error');
       setShowAlert(true);
       return;
@@ -182,7 +213,9 @@ const AddEvent = () => {
         description: eventDetails.description,
         startDateTime: formattedStartTime,
         endDateTime: formattedEndTime,
-        friends: selectedFriends
+        inviteType: showFriends ? 'friends' : 'groups',
+        friends: showFriends ? selectedFriends : [],
+        groups: !showFriends ? selectedGroups : []
       };
 
       const response = await axios.post('/addEvent', body);
@@ -198,6 +231,7 @@ const AddEvent = () => {
           endDateTime: ''
         });
         setSelectedFriends([username]);
+        setSelectedGroups([]);
         setHasChanges(false);
       }
     } catch (error) {
@@ -284,44 +318,100 @@ const AddEvent = () => {
               />
             </div>
 
-            <div className="mt-4">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Add friends to the event</h3>
-              {friendsLoading && <div className="text-gray-500">Loading friends...</div>}
-              {friendsError && <div className="text-red-500">{friendsError}</div>}
-              <div className="space-y-2">
-                {friends.map((friend, index) => (
-                  <div 
-                    key={index}
-                    className="p-3 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-                    style={{marginTop:"20px"}}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 flex-1">
-                        <span className="font-medium w-48">{friend.display_name}</span>
-                        <span className="text-gray-500 w-32" style={{marginLeft:"50px"}}>@{friend.username}</span>
-                        <button
-                          type="button"
-                          onClick={() => handleFriendToggle(friend.username)}
-                          className="px-4 py-2 text-white w-32"
-                          style={{
-                            backgroundColor: selectedFriends.includes(friend.username) ? '#ef4444' : '#3b82f6',
-                            color: 'white',
-                            borderRadius: '20px',
-                            border: '1px solid rgba(255, 255, 255, 0.2)',
-                            transition: 'background-color 0.2s ease',
-                            marginLeft:"50px"
-                          }}
-                        >
-                          {selectedFriends.includes(friend.username) ? 'Remove' : 'Add'}
-                        </button>
+            <div className="mt-8 mb-4">
+             
+
+              <h3 className="text-lg font-medium text-gray-900 mb-2" style={{marginTop:"50px"}}>
+                Add {showFriends ? 'friends' : 'groups'} to the event
+
+                <button
+                  type="button"
+                  onClick={handleToggleView}
+                  className="px-4 py-2 text-white w-32"
+                            style={{
+                              backgroundColor: '#3b82f6',
+                              color: 'white',
+                              borderRadius: '20px',
+                              border: '1px solid rgba(255, 255, 255, 0.2)',
+                              transition: 'background-color 0.2s ease',
+                              marginLeft:"120px"
+                            }}
+                >
+                  Switch to {showFriends ? 'Groups' : 'Friends'}
+                </button>
+              </h3>
+              {friends.length === 0 &&
+                <p>
+                  No Friends yet
+                </p>
+              }
+              {showFriends ? (
+                <div className="space-y-2">
+                  {friends.map((friend, index) => (
+                    <div 
+                      key={index}
+                      className="p-3 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                      style={{marginTop:"20px"}}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4 flex-1">
+                          <span className="font-medium w-48">{friend.display_name}</span>
+                          <span className="text-gray-500 w-32" style={{marginLeft:"50px"}}>@{friend.username}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleFriendToggle(friend.username)}
+                            className="px-4 py-2 text-white w-32"
+                            style={{
+                              backgroundColor: selectedFriends.includes(friend.username) ? '#ef4444' : '#3b82f6',
+                              color: 'white',
+                              borderRadius: '20px',
+                              border: '1px solid rgba(255, 255, 255, 0.2)',
+                              transition: 'background-color 0.2s ease',
+                              marginLeft:"50px"
+                            }}
+                          >
+                            {selectedFriends.includes(friend.username) ? 'Remove' : 'Add'}
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-                {!friendsLoading && !friendsError && friends.length === 0 && (
-                  <div className="text-gray-500">No friends found</div>
-                )}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-2">
+  {groups.map((groupName, index) => (
+    <div 
+      key={index}
+      className="p-3 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+      style={{marginTop:"20px"}}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4 flex-1">
+          <span className="font-medium w-48">{groupName}</span>
+          <button
+            type="button"
+            onClick={() => handleGroupToggle(groupName)}  
+            className="px-4 py-2 text-white w-32"
+            style={{
+              backgroundColor: selectedGroups.includes(groupName) ? '#ef4444' : '#3b82f6',
+              color: 'white',
+              borderRadius: '20px',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              transition: 'background-color 0.2s ease',
+              marginLeft:"50px"
+            }}
+          >
+            {selectedGroups.includes(groupName) ? 'Remove' : 'Add'}
+          </button>
+        </div>
+      </div>
+    </div>
+  ))}
+  {groups.length === 0 && (
+    <div className="text-gray-500">No groups found</div>
+  )}
+</div>
+              )}
             </div>
             
             <button 

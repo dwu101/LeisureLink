@@ -1,4 +1,3 @@
-// Create a new component in your components folder called NavigationPrompt.js
 import React from 'react';
 
 const NavigationPrompt = ({ when, message, onOK, onCancel }) => {

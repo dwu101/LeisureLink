@@ -4,7 +4,6 @@ import './Sidebar.css';
 import Alert from './Alert';
 
 const Sidebar = ({isOpen: propIsOpen, setIsOpen: propSetIsOpen, onClickFunc = null}) => {
-  // const [isOpen, setIsOpen] = useState(false);
 
   const [internalIsOpen, internalSetIsOpen] = useState(false);
   const isOpen = propIsOpen !== undefined ? propIsOpen : internalIsOpen;
@@ -71,14 +70,12 @@ const Sidebar = ({isOpen: propIsOpen, setIsOpen: propSetIsOpen, onClickFunc = nu
         />
     <div className="sidebar-container">
 
-      {/* Hamburger Icon */}
       <div className={`hamburger-icon`} onClick={toggleSidebar}>
         <div className="line"></div>
         <div className="line"></div>
         <div className="line"></div>
       </div>
 
-      {/* Sidebar */}
       {!onClickFunc ? (
       
       <div className={`sidebar ${isOpen ? 'show' : ''}`}>
@@ -101,11 +98,10 @@ const Sidebar = ({isOpen: propIsOpen, setIsOpen: propSetIsOpen, onClickFunc = nu
             <Link to="/ShowFriends" onClick={toggleSidebar}>See Friends</Link>
           </li>
 
-          {gcalLinked && (
             <li>
               <Link to="/AddEvent" onClick={toggleSidebar}>Schedule a Hang Out!</Link>
             </li>
-          )}
+          
           
           <li style={{marginTop:"50px",cursor: "pointer"}} onClick={logOut}>
              Sign Out
@@ -130,10 +126,9 @@ const Sidebar = ({isOpen: propIsOpen, setIsOpen: propSetIsOpen, onClickFunc = nu
           <li style={{cursor:"pointer"}}onClick={() => onClickFunc('/ShowFriends')}>See Friends
           </li>
 
-          {gcalLinked &&
-            <li style={{cursor:"pointer"}}onClick={() => onClickFunc('/AddEvent')}>Schedule a Hang Out!
-            </li>
-          }
+          <li style={{cursor:"pointer"}}onClick={() => onClickFunc('/AddEvent')}>Schedule a Hang Out!
+          </li>
+          
         
           <li style={{marginTop:"50px",cursor: "pointer"}} onClick={logOut}>
              Sign Out

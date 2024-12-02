@@ -145,7 +145,6 @@ class Groups(db.Model):
         self.group_name=group_name
         self.users=users
 
-# Helper Functions
 def get_user_by_username(username):
     return User.query.filter_by(username=username).first()
 
@@ -167,17 +166,21 @@ def create_user(username, password, email):
         print(e)
         return {"success": False, "message": "Username or email already exists."}
     
+from datetime import datetime
+from googleapiclient.discovery import build
+from google.oauth2.credentials import Credentials
+
 def create_user_GCAL(username, token, refresh_token, token_uri, client_id, client_secret, scopes, email):
-    account_id = get_user_by_username(username).account_id
+    user = get_user_by_username(username)
+    account_id = user.account_id
 
     user_to_delete = UserGCAL.query.filter_by(username=username).first()
-
     if user_to_delete:
-        db.session.delete(user_to_delete)  # Mark the row for deletion
+        db.session.delete(user_to_delete)
         db.session.commit()
     
     insert = UserGCAL(
-        account_id=account_id,  # Use the account_id from user2
+        account_id=account_id,
         username=username,
         token=token,
         refresh_token=refresh_token,
@@ -186,10 +189,45 @@ def create_user_GCAL(username, token, refresh_token, token_uri, client_id, clien
         client_secret=client_secret,
         scopes=scopes,
         email=email
-        
     )
     db.session.add(insert)
     db.session.commit()
+
+    if user.events and len(user.events) >= 4:
+        credentials = Credentials(
+            token=token,
+            refresh_token=refresh_token,
+            token_uri=token_uri,
+            client_id=client_id,
+            client_secret=client_secret,
+            scopes=scopes
+        )
+
+        service = build('calendar', 'v3', credentials=credentials)
+
+        for i in range(0, len(user.events), 4):
+            try:
+                event = {
+                    'summary': user.events[i],
+                    'description': user.events[i + 3],
+                    'start': {
+                        'dateTime': user.events[i + 1],
+                        'timeZone': 'UTC'
+                    },
+                    'end': {
+                        'dateTime': user.events[i + 2],
+                        'timeZone': 'UTC'
+                    }
+                }
+
+                service.events().insert(calendarId='primary', body=event).execute()
+
+            except IndexError:
+                print(f"Skipping incomplete event data at index {i}")
+            except Exception as e:
+                print(f"Error creating event {user.events[i]}: {str(e)}")
+
+    return insert
 
 
 
@@ -263,7 +301,6 @@ def remove_friend(current_user, friend_username):
 
 
 def init_db():
-    # Check if the database exists, and create it if not
     engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
     if not database_exists(engine.url):
         create_database(engine.url)
@@ -273,7 +310,7 @@ def init_db():
         print("Database already exists.")
         db.drop_all()
 
-    db.create_all()  # Create tables based on the models defined
+    db.create_all() 
 
 @app.before_request
 def make_session_permanent():
@@ -302,13 +339,9 @@ def login():
     data = request.json
     username = data.get('username')
     password = data.get('password')
-    # print(username)
-    # print(password)
     if check_user_credentials(username, password):
-        # print("A")
         return jsonify({"status": 200, "message": "Success!"})
     else:
-        # print("B")
         return jsonify({"status": 401, "message": "Invalid credentials"})
 
 @app.route('/signUp', methods=['POST'])
@@ -317,12 +350,8 @@ def sign_up():
     username = data.get('username')
     password = data.get('password')
     email = data.get('email')
-    # print(username, password, email)
     if username and password and email:
         result = create_user(username, password, email)
-        # print("IN SIGN UP")
-        # print("username",(username))
-        # print("email",get_email(username))
         return jsonify(result)
     else:
         return jsonify({"status": 401, "message": "Incomplete Info"})
@@ -332,7 +361,6 @@ def sign_up():
 @app.route('/getProfile', methods=['GET'])
 def get_profile():
     username = request.args.get('username')
-    # print(username)
     if not username:
         return jsonify({"success": False, "message": "Username is required"}), 400
     
@@ -345,9 +373,7 @@ def get_profile():
         "pfp_link": get_pfp_link(username),
         "tags": get_tags(username)
     }
-    # print(profile)
     if all(value is not None for value in profile.values()):
-        # print("HERE")
         return jsonify({"success": True, "profile": profile})
     else:
         return jsonify({"success": False, "message": "User not found"}), 404
@@ -357,7 +383,6 @@ def update_user_tags():
    try:
        data = request.get_json()
        
-       # Check if required fields are present
        if not data or 'username' not in data or 'tags' not in data:
            return jsonify({
                'success': False,
@@ -408,7 +433,6 @@ def add_group():
     if not user:
         return jsonify({"success": False, "message": "User not found"}), 404
 
-    # Add the groups to the database
     for group_name in group_names:
         group = Groups.query.filter_by(group_name=group_name).first()
         if not group:
@@ -424,7 +448,6 @@ def create_group():
     try:
         data = request.get_json()
         
-        # Validate input
         if 'groupName' not in data or 'usernames' not in data:
             return jsonify({
                 'success': False,
@@ -434,7 +457,7 @@ def create_group():
         group_name = data['groupName']
         usernames = data['usernames']
         
-        # Check if group already exists
+
         existing_group = Groups.query.filter_by(group_name=group_name).first()
         if existing_group:
             return jsonify({
@@ -442,7 +465,7 @@ def create_group():
                 'message': 'Group name already exists'
             }), 400
             
-        # Get account_ids for all usernames
+
         user_account_ids = []
         users_to_update = []
         
@@ -456,32 +479,25 @@ def create_group():
             user_account_ids.append(user.account_id)
             users_to_update.append(user)
         
-        # Create new group
+
         new_group = Groups(
             group_name=group_name,
             users=user_account_ids
         )
         
-        # Add to database
         db.session.add(new_group)
         
-        # Add group to each user's groups array and commit the changes
         for user in users_to_update:
             if user.groups is None:
                 user.groups = []
-            # Create a new list instead of modifying in place
             new_groups = user.groups.copy()
             new_groups.append(group_name)
-            # Assign the new list to trigger change detection
             user.groups = new_groups
-            # Flag the column as modified
             flag_modified(user, "groups")
             db.session.add(user)
             
-        # Commit all changes in a single transaction
         db.session.commit()
 
-        # Verify the changes after commit
         updated_users = []
         for username in usernames:
             user = User.query.filter_by(username=username).first()
@@ -489,7 +505,6 @@ def create_group():
                 'username': username,
                 'groups': user.groups
             })
-            # print(f"{username}: {user.groups}")
             
         return jsonify({
             'success': True,
@@ -510,7 +525,6 @@ def create_group():
             'error': str(e)
         }), 500
 
-# Endpoint to delete groups for a user
 @app.route('/deleteGroup', methods=['POST'])
 def delete_group():
     data = request.json
@@ -526,17 +540,15 @@ def delete_group():
     if not user:
         return jsonify({"success": False, "message": "User not found"}), 404
 
-    # Delete the groups from the user's list
     for group_name in group_names:
         group = Groups.query.filter_by(group_name=group_name).first()
         if group:
-            # Convert tuple to list, remove user, and convert back to tuple
             users_list = list(group.users)
             if user.account_id in users_list:
                 users_list.remove(user.account_id)
-                group.users = tuple(users_list)  # Convert back to tuple
+                group.users = tuple(users_list)  
                 
-                if not users_list:  # If no users remain
+                if not users_list: 
                     db.session.delete(group)
         
         if user.groups is not None and group_name in user.groups:
@@ -587,9 +599,10 @@ def remove_group_members():
     try:
         data = request.json
         group_name = data.get('group_name')
-        usernames = data.get('members', [])  # List of usernames to remove
-        print(group_name)
-        print(usernames)
+        usernames = data.get('members', []) 
+
+  
+
 
         if not group_name or not isinstance(usernames, list):
             return jsonify({
@@ -597,7 +610,6 @@ def remove_group_members():
                 "message": "Invalid input - group name or members list missing"
             }), 400
 
-        # Get the group
         group = Groups.query.filter_by(group_name=group_name).first()
         if not group:
             return jsonify({
@@ -605,7 +617,6 @@ def remove_group_members():
                 "message": f"Group {group_name} not found"
             }), 404
 
-        # Get all users that need to be removed
         users_to_remove = User.query.filter(User.username.in_(usernames)).all()
         if not users_to_remove:
             return jsonify({
@@ -613,24 +624,19 @@ def remove_group_members():
                 "message": "No valid users found to remove"
             }), 404
 
-        # Keep track of successful removals
         removed_users = []
         
         for user in users_to_remove:
-            # Remove the group from user's groups list
             if user.groups is not None and group_name in user.groups:
                 user.groups = [g for g in user.groups if g != group_name]
             
-            # Remove user's account_id from group's users list
             if group.users is not None and user.account_id in group.users:
                 group.users = [u for u in group.users if u != user.account_id]
                 removed_users.append(user.username)
 
-        # If all users were removed from the group, you might want to delete the group
         if not group.users:
             db.session.delete(group)
         
-        # Commit all changes
         db.session.commit()
 
         return jsonify({
@@ -646,7 +652,6 @@ def remove_group_members():
             "message": f"An error occurred: {str(e)}"
         }), 500
 
-# Endpoint to search for users or groups
 @app.route('/search', methods=['POST'])
 def search():
     data = request.get_json()
@@ -663,7 +668,6 @@ def search():
     results = []
 
     if search_by == "username":
-        # print("here")
         users = User.query.filter(User.username.ilike(f"%{query}%")).all()
         print(f"users {users}")
     elif search_by == "displayName":
@@ -683,10 +687,8 @@ def search():
         })
 
     print(jsonify({"success": 200, "results": results}))
-    # return jsonify({"success": 200, "results": results})
     return results
 
-# Endpoint to change password
 @app.route('/changePassword', methods=['POST'])
 def change_password():
     data = request.json
@@ -704,14 +706,12 @@ def change_password():
     db.session.commit()
     return jsonify({"success": True, "message": "Password changed successfully"})
 
-# Endpoint to change email
 @app.route('/changeEmail', methods=['POST'])
 def change_email():
     data = request.json
     username = data.get('username')
     new_email = data.get('newEmail')
 
-    # print(data)
     if not username or not new_email:
         return jsonify({"success": False, "message": "Username and new email are required"}), 400
 
@@ -723,7 +723,6 @@ def change_email():
     db.session.commit()
     return jsonify({"success": True, "message": "Email changed successfully"})
 
-# Endpoint to change bio
 @app.route('/changeBio', methods=['POST'])
 def change_bio():
     data = request.json
@@ -741,7 +740,6 @@ def change_bio():
     db.session.commit()
     return jsonify({"success": True, "message": "Bio changed successfully"})
 
-# Endpoint to change display name
 @app.route('/changeDisplayName', methods=['POST'])
 def change_display_name():
     data = request.json
@@ -759,7 +757,6 @@ def change_display_name():
     db.session.commit()
     return jsonify({"success": True, "message": "Display name changed successfully"})
 
-# Endpoint to change status
 @app.route('/changeStatus', methods=['POST'])
 def change_status():
     data = request.json
@@ -777,14 +774,11 @@ def change_status():
     db.session.commit()
     return jsonify({"success": True, "message": "Status changed successfully"})
 
-# Endpoint to change profile picture link
 @app.route('/changePFP', methods=['POST'])
 def change_pfp():
     data = request.json
     username = data.get('username')
     new_pfp_link = data.get('newPFPLink')
-    # print(data)
-    # print(username, new_pfp_link)
 
 
     if not username or not new_pfp_link:
@@ -812,7 +806,6 @@ def check_friendship():
     try:
         data = request.get_json()
         
-        # Validate input
         if 'currentUsername' not in data or 'friendUsername' not in data:
             return jsonify({
                 'success': False,
@@ -822,11 +815,9 @@ def check_friendship():
         current_username = data['currentUsername']
         friend_username = data['friendUsername']
         
-        # Get user objects
         current_user = User.query.filter_by(username=current_username).first()
         friend_user = User.query.filter_by(username=friend_username).first()
         
-        # Check if both users exist
         if not current_user:
             return jsonify({
                 'success': False,
@@ -839,7 +830,6 @@ def check_friendship():
                 'message': f'User {friend_username} not found'
             }), 404
             
-        # Check if they're friends
         is_friend = friend_username in current_user.friends if current_user.friends else False
         
         return jsonify({
@@ -904,7 +894,8 @@ def get_user_friends(username):
         
         return jsonify({
             'success': True,
-            'friends': friends_details
+            'friends': friends_details,
+            'groups' : user.groups
         }), 200
         
     except Exception as e:
@@ -943,7 +934,6 @@ def authorize():
     cookies[state] = {"username": username}
 
     session.modified=True
-    # Instead of redirecting directly, return the URL for the frontend to handle
     return jsonify({
         'authUrl': authorization_url
     })
@@ -990,7 +980,6 @@ def oauth2callback():
                           samesite='Lax')
 
 
-                                                                                                #INSERT FUNCTION TO ADD GCAL DATA INTO DB
         create_user_GCAL(cookies[state]["username"], credentials.token, credentials.refresh_token, credentials.token_uri, credentials.client_id,credentials.client_secret,credentials.scopes, google_email)
         return redirect('http://localhost:3000/ProfilePage')
 
@@ -1000,7 +989,6 @@ def oauth2callback():
 
 @app.route('/check-cred')
 def check_cred():
-    # Add detailed session debugging
     print("Current session at check-cred:", dict(session))
     print("Request cookies:", request.cookies)
     has_credentials = 'state' in session
@@ -1015,6 +1003,19 @@ def add_event():
     try:
         data = request.json
         friends = data['friends']
+        invite_type = data['inviteType']
+
+        if invite_type == 'friends':
+            friends = data['friends']
+        else: 
+            friends = []
+            for group_name in data['groups']:
+                group = Groups.query.filter_by(group_name=group_name).first()
+                if group:
+                    group_users = User.query.filter(User.account_id.in_(group.users)).all()
+                    friends.extend([user.username for user in group_users])
+            friends = list(set(friends))
+
         description = data.get("description", '') + '\n' + f"With {', '.join(friends[:-1])}, and {friends[-1]}" if friends else data.get("description", '')
         
         event = {
@@ -1096,7 +1097,7 @@ def add_event():
         
         if conflicts:
             return jsonify({
-                'error': 'There is a Calendar Conflict for users invited (potentially you)',
+                'error': 'There is a Calendar Conflict for users invited',
                 'conflicting_users': conflicts
             }), 409
 
@@ -1284,18 +1285,14 @@ def logout():
             except Exception as e:
                 print(f"Error revoking Google OAuth token: {str(e)}")
         
-        # Clear the session
         session.clear()
         
-        # Create response object
         response = jsonify({'message': 'Successfully logged out'})
         
-        # Clear cookies
         response.delete_cookie('session')
         response.delete_cookie('auth_check')
         response.delete_cookie('google_oauth_state')
         
-        # Set cookie expiry in the past to ensure deletion
         response.set_cookie('session', '', expires=0)
         
         if request.method == 'OPTIONS':
@@ -1318,25 +1315,19 @@ def upload_file():
         return jsonify({'error': 'No file part'}), 400
     
     file = request.files['file']
-    # username = request.files['username']
-    # # change_pfp()
     
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 401
     
     if file and allowed_file(file.filename):
-        # Secure the filename
         filename = secure_filename(file.filename)
         
-        # Add timestamp to ensure uniqueness
         import time
         timestamp = str(int(time.time()))
         filename = f"{timestamp}_{filename}"
         
-        # Create upload folder if it doesn't exist
         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
         
-        # Save the file
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
         
@@ -1349,7 +1340,6 @@ def upload_file():
 
 
 def insert_dummy_data():
-    # Insert dummy data into the User table
     user1 = User(
         account_id= 1,
         username="john_doe",
@@ -1372,7 +1362,7 @@ def insert_dummy_data():
         bio="I love coding and coffee.",
         display_name="Jane Smith",
         status="Busy",
-        groups=["Developers"],
+        groups=["Developers", 'Designers'],
         pfp_link="/profile-pictures/defaultpfp.jpg",
         friends= ["john_doe"],
         tags = []
@@ -1393,7 +1383,6 @@ def insert_dummy_data():
         tags = ['Cooking', 'Festivals', 'Theater']
     )
 
-    # Add users to the session and commit to generate account_ids
     
     db.session.add(user1)
     print("1")
@@ -1402,9 +1391,8 @@ def insert_dummy_data():
     db.session.add(user3)
     db.session.commit()
 
-    # Use the generated account_ids for UserGCAL
     user_gcal1 = UserGCAL(
-        account_id=1,  # Use the account_id from user1
+        account_id=1,  
         username="john_doe",
         token=john_doe['token'],
         refresh_token=john_doe['refresh_token'],
@@ -1416,7 +1404,7 @@ def insert_dummy_data():
     )
 
     user_gcal2 = UserGCAL(
-        account_id=2,  # Use the account_id from user1
+        account_id=2, 
         username="jane_smith",
         token=jane_smith['token'],
         refresh_token=jane_smith['refresh_token'],
@@ -1427,42 +1415,23 @@ def insert_dummy_data():
         email=jane_smith['email']
     )
 
-    # user_gcal2 = UserGCAL(
-    #     account_id=user2.account_id,  # Use the account_id from user2
-    #     username="jane_smith",
-    #     client_id="client456",
-    #     project_id="project456",
-    #     auth_uri="https://example.com/auth2",
-    #     token_uri="https://example.com/token2",
-    #     auth_provider_x509_cert_url="https://example.com/cert2",
-    #     client_secret="secret456",
-    #     redirect_uri="https://example.com/redirect2"
-    # )
-
-    # Insert dummy data into the Groups table
     group1 = Groups(
         group_name="Developers",
-        users=[user1.account_id, user2.account_id]  # Use account_ids from users
+        users=[user1.account_id, user2.account_id]  
     )
 
     group2 = Groups(
         group_name="Designers",
-        users=[user1.account_id]  # Use account_id from user1
+        users=[user1.account_id, user2.account_id]  
     )
 
-    # Add and commit all the dummy data to the database
     db.session.add(user_gcal1)
-    print("3")
-    # db.session.add(user_gcal2)
-    print("4")
     db.session.add(group1)
-    print("5")
-    print("6")
+    db.session.add(group2)
     db.session.commit()
 
     print("Dummy data inserted successfully.")
 
-# Initialize the database on app startup
 with app.app_context():
     init_db()
     insert_dummy_data()

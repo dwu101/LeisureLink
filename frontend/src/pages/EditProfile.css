@@ -2,24 +2,22 @@
   display: flex;
   align-items: center;
   margin-bottom: 15px;
-  /* Add these new properties */
   width: 100%;
 }
 
 .input-container label {
-  min-width: 150px; /* Fixed width for labels */
-  margin-right: 10px; /* Consistent spacing */
+  min-width: 150px; 
+  margin-right: 10px;
 }
 
 .input-container input {
-  flex: 1; /* Takes up remaining space */
+  flex: 1; 
   padding: 8px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  max-width: 300px; /* Optional: limits input width */
+  max-width: 300px; 
 }
 
-/* Your existing button styles can remain the same */
 .button {
   padding: 10px 20px;
   background-color: #007bff;

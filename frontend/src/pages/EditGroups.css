@@ -34,8 +34,8 @@
 	gap: 1rem;
   }
   .profile-info button {
-	width: auto; /* Reset any width constraints */
-	align-self: flex-start; /* Align button to the left instead of stretching */
+	width: auto; 
+	align-self: flex-start; 
 	height: 40px;
 	width: 150px;
 
@@ -47,8 +47,8 @@
 	gap: 0.25rem;
   }
   .info-field button {
-	width: auto; /* Reset any width constraints */
-	align-self: flex-start; /* Align button to the left instead of stretching */
+	width: auto; 
+	align-self: flex-start; 
 	height: 100px
   }
 
@@ -67,7 +67,6 @@
 	display: flex;
 	flex-direction: column;
 	gap: 2rem;
-	/* background-color: aliceblue; */
   }
   
   .featured-project {
@@ -142,7 +141,6 @@
   }
 
   body {
-	/* margin: 0; */
 	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
 	  'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
 	  sans-serif;
@@ -158,7 +156,7 @@
 	width: 64px;
 	height: 64px;
 	border-radius: 50%;
-	background-color: #dc2626; /* Red color */
+	background-color: #dc2626;
 	border: none;
 	cursor: pointer;
 	display: flex;
@@ -172,7 +170,7 @@
   }
   
   .circle-button:hover {
-	background-color: #b91c1c; /* Darker red on hover */
+	background-color: #b91c1c;
 	transform: translateY(-2px);
 	box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
   }
@@ -192,7 +190,6 @@
 	font-weight: 500;
   }
 
-  /* Add these styles to your existing ProfilePage.css file */
 
 .groups-header {
 	display: flex;
@@ -250,7 +247,6 @@
 	padding: 1rem;
   }
 
-/* Update these styles in your ProfilePage.css */
 
 .group-item-content {
   display: grid;
@@ -347,7 +343,7 @@
   padding: 1rem;
   text-align: center;
 }
-/* Previous styles remain the same */
+
 
 .groups-container {
 	display: flex;
@@ -357,7 +353,7 @@
   
   .flex-1 {
 	flex: 1;
-	min-width: 0; /* Prevents flex items from overflowing */
+	min-width: 0; 
   }
   
   .section-box {
@@ -401,7 +397,6 @@
 	box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
   }
   
-  /* Add media query for responsiveness */
   @media (max-width: 768px) {
 	.groups-container {
 	  flex-direction: column;

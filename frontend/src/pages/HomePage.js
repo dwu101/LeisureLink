@@ -54,7 +54,7 @@ function LoginPage() {
           password,
         });
         if (response.data.status === 200){
-          setMessage(response.data.message); // Or redirect, etc.
+          setMessage(response.data.message);
           sessionStorage.setItem('username', username)
             
           const responsePFP = await fetch(`/getProfile?username=${username}`);
@@ -75,7 +75,7 @@ function LoginPage() {
         }
 
       } catch (error) {
-        // Handle errors (e.g., incorrect credentials)
+       
         setMessage(error.response?.data?.error || "Login failed. Please try again.");
       }
     }
@@ -92,7 +92,7 @@ function LoginPage() {
         
           const response = await axios.post('/signUp', formData, {
             headers: {
-              'Content-Type': 'application/json'  // Specify content type for form data
+              'Content-Type': 'application/json'  
             }
           });
           
@@ -168,7 +168,6 @@ function LoginPage() {
 
         
 
-        {/* <Link to="/SignupPage"> */}
         {!signingUp && (
           <>
           <button className="button" onClick={() => {setSigningUp(true); setMessage('')}}>Or Sign up today!</button>
@@ -200,7 +199,6 @@ function LoginPage() {
 
       </form>
 
-      {/* <HelloWorld  names={namesArray} /> */}
       {message && <p>{message}</p>}
       </div>
     </div>

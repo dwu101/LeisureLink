@@ -26,7 +26,7 @@ const ProfilePictureUpload = ({setIsChanged}) => {
         {
           unit: '%',
           width: 90,
-          height: 90, // Added fixed height
+          height: 90, 
         },
         aspect,
         mediaWidth,
@@ -56,7 +56,6 @@ const ProfilePictureUpload = ({setIsChanged}) => {
     const { width, height } = e.currentTarget;
     const crop = centerAspectCrop(width, height, 1);
     setCrop(crop);
-    // Set completedCrop immediately since we won't allow resizing
     setCompletedCrop(crop);
   }
 
@@ -78,25 +77,19 @@ const ProfilePictureUpload = ({setIsChanged}) => {
         throw new Error('No crop data available');
       }
   
-      // Set canvas size to be a square based on the smallest dimension of the crop
       const size = Math.min(completedCrop.width, completedCrop.height);
       canvas.width = size;
       canvas.height = size;
-  
-      // Calculate scaling factors
       const scaleX = image.naturalWidth / image.width;
       const scaleY = image.naturalHeight / image.height;
   
-      // Clear the canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
   
-      // Create a circular clipping path
       ctx.beginPath();
       ctx.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI, true);
       ctx.closePath();
       ctx.clip();
   
-      // Draw the image centered within the circular clip
       const drawX = (completedCrop.x * scaleX) + (completedCrop.width * scaleX - size) / 2;
       const drawY = (completedCrop.y * scaleY) + (completedCrop.height * scaleY - size) / 2;
   
@@ -117,7 +110,7 @@ const ProfilePictureUpload = ({setIsChanged}) => {
           if (blob) {
             resolve(URL.createObjectURL(blob));
           }
-        }, 'image/png', 1); // Using PNG for better quality with transparency
+        }, 'image/png', 1); 
       });
     } catch (error) {
       console.error('Error creating cropped image:', error);
@@ -131,7 +124,6 @@ const ProfilePictureUpload = ({setIsChanged}) => {
       
       const croppedImageUrl = await getCroppedImg();
       setCroppedImage(croppedImageUrl);
-      // handleUpload()
     } catch (error) {
       console.error('Error confirming crop:', error);
     }
@@ -148,7 +140,6 @@ const ProfilePictureUpload = ({setIsChanged}) => {
       const blob = await response.blob();
       
       const formData = new FormData();
-      // const timestamp = new Date().getTime();
       const file = new File([blob], `profile_${username}.jpg`, { type: 'image/jpeg' });
       formData.append('file', file);
 
@@ -168,11 +159,10 @@ const ProfilePictureUpload = ({setIsChanged}) => {
       const data = await uploadResponse.json();
       console.log('Upload successful. Image path:', data.imagePath);
 
-      // try {
       console.log("AAA")
       console.log(username)
       console.log(data.imagePath)
-      const response2 = await fetch('/changePFP', {  // Replace with your actual endpoint
+      const response2 = await fetch('/changePFP', { 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -233,7 +223,6 @@ const ProfilePictureUpload = ({setIsChanged}) => {
             <ReactCrop
               crop={crop}
               onChange={(_, percentCrop) => {
-                // Only update the position, maintain the size
                 setCrop(prev => ({
                   ...prev,
                   x: percentCrop.x,

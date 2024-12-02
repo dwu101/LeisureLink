@@ -34,26 +34,20 @@ const SeeGroup = () => {
   useEffect(() => {
     const handlePopState = (event) => {
       if (hasChanges) {
-        // Prevent the default navigation
         event.preventDefault();
         event.stopPropagation();
         
-        // Store the current URL
         const currentUrl = window.location.href;
         
-        // Get the URL we're trying to navigate to
         const nextUrl = document.location.pathname;
         
-        // Store the attempted navigation path
         setNavPath(nextUrl);
         setShowPrompt(true);
         
-        // Push the current state back to prevent navigation
         window.history.pushState(null, '', currentUrl);
       }
     };
   
-    // Block initial navigation when component mounts
     if (hasChanges) {
       window.history.pushState(null, '', window.location.href);
     }
@@ -101,7 +95,6 @@ const SeeGroup = () => {
     setShowPrompt(false);
     setNavPath('');
     setNextLocation(null);
-    // Push current URL again to ensure we stay on this page
     window.history.pushState(null, '', window.location.href);
   };
 
@@ -110,7 +103,6 @@ const SeeGroup = () => {
     setHasChanges(false);
     
     if (navPath) {
-      // Store the navigation target
       setNextLocation(navPath);
     }
     setNavPath('');
@@ -274,10 +266,10 @@ const SeeGroup = () => {
                         marginLeft: '10px',
                         backgroundColor: removedMembers.includes(result.username) ? '#ef4444' : '#3b82f6',
                         transition: 'background-color 0.2s ease',
-                        width: '140px',  // Fixed width for all buttons
-                        whiteSpace: 'nowrap',  // Prevent text wrapping
-                        overflow: 'hidden',    // Hide overflow text
-                        textOverflow: 'ellipsis',  // Show ... if text is too long
+                        width: '140px',  
+                        whiteSpace: 'nowrap', 
+                        overflow: 'hidden',   
+                        textOverflow: 'ellipsis',  
                         justifyContent:'center',
 
                       }}
@@ -306,7 +298,7 @@ const SeeGroup = () => {
                 onClick={handleSaveChanges}
                 className="search-button"
                 style={{
-                  width: '180px',  // Match the width of other buttons,
+                  width: '180px',  
                   justifyContent: 'center'
                 }}
               >

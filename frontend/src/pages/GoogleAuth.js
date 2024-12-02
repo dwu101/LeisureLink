@@ -31,7 +31,7 @@ const GoogleAuth = () => {
           'Accept': 'application/json'
         },
         params: {
-          "username": username // Adding username as a query parameter
+          "username": username 
         },
       });
       window.location.href = response.data.authUrl;

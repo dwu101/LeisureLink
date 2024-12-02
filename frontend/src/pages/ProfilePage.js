@@ -24,10 +24,8 @@ const ProfilePage = () => {
 
   const username = sessionStorage.getItem('username');
 
- 
-//   useEffect(() => {
-    
-// }, [username]);
+
+  
   
   useEffect(() => {
 
@@ -40,9 +38,8 @@ const ProfilePage = () => {
         
         if (result.success) {
           setProfile(result.profile);
-          // console.log("BBBB")
-          // console.log(result.profile.pfp_link)
-          // sessionStorage.setItem('pfp_link', result.profile.pfp_link)
+
+      
           console.log(result.profile)
 
         } else {
@@ -66,9 +63,8 @@ const ProfilePage = () => {
         });
       
         const resultLink = await responseLink.json();
-        // console.log("AAAA");
-        // console.log(resultLink);
-      
+
+        
         if (resultLink[1] === true) {
           setGcalLinked(true);
           sessionStorage.setItem('gcalLinked', true)
@@ -134,13 +130,7 @@ const ProfilePage = () => {
       const result = await response.json();
       console.log(result)
 
-      // if (response.ok) {
-      //   setStatusMessage('Status changed successfully');
-      // } else {
-      //   setStatusMessage(`Error: ${result.message}`);
-      // }
     } catch (error) {
-      // setStatusMessage('Error: Could not update status');
       console.error('Error:', error);
     }
 
@@ -158,17 +148,6 @@ const ProfilePage = () => {
     return <div>Error: {error}</div>;
   }
 
-  // const handleGroupClick = (group) => {
-  //   // Navigate to group page or handle group click
-  //   console.log('Group clicked:', group);
-  //   // Example: navigate(`/group/${group}`);
-  // };
-
-  // const handleCreateGroup = () => {
-  //   // Handle create group action
-  //   console.log('Create group clicked');
-  //   // Example: navigate('/create-group');
-  // };
 
   return (
     <div>
@@ -284,7 +263,6 @@ const ProfilePage = () => {
   profile.groups.map((group, index) => (
     <div
       key={index}
-      // className="group-item"
       style={{
         backgroundColor: 'white',
         padding: '0.75rem',
@@ -292,9 +270,9 @@ const ProfilePage = () => {
         fontWeight: 'bold',
         fontSize: '1rem',
         cursor: 'default',
-        pointerEvents: 'none',  // This will completely disable any hover effects
-        border: '1px solid #e5e7eb', // Optional: adds a subtle border
-        marginBottom: '0rem'  // Adds some spacing between items
+        pointerEvents: 'none', 
+        border: '1px solid #e5e7eb', 
+        marginBottom: '0rem' 
       }}
     >
       <h3 style={{ 
